@@ -8,7 +8,7 @@ with open("./README.md") as f:
 requirements = []
 
 setup(
-    name="graph",
+    name="graphs",
     version=version,
     description="Data-rich graphs.",
     author="Max Hully",
