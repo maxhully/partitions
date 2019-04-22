@@ -15,10 +15,39 @@
 ... )
 >>> graph
 <Graph ['population', 'votes']>
+
+```
+
+### Nodes and edges
+
+```python
+graph
 >>> set(graph.nodes) == {0, 1, 2}
 True
 >>> set(graph.edges) == {(0, 1), (1, 2), (0, 2)}
 True
+>>> list(graph)
+[0, 1, 2]
+>>> len(graph.nodes)
+3
+>>> len(graph.edges)
+3
+
+```
+
+#### Edges are undirected
+
+```python
+>>> (0, 1) in graph.edges
+True
+>>> (1, 0) in graph.edges
+True
+
+```
+
+### Data
+
+```python
 >>> graph.data["population"]
 0    100
 1    200
@@ -29,6 +58,12 @@ Name: population, dtype: int64
 0         100     50
 1         200     60
 2          50     40
+
+```
+
+### Neighbors
+
+```python
 >>> set(graph.neighbors[0]) == {1, 2}
 True
 >>> set(graph.neighbors[1]) == {0, 2}

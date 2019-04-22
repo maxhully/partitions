@@ -13,7 +13,10 @@ class Edges:
         return "<Edges {}>".format(list(self))
 
     def __contains__(self, edge):
-        return bool(self.matrix[edge])
+        try:
+            return bool(self.matrix[edge])
+        except IndexError:
+            return False
 
     def __iter__(self):
         row, col = self.matrix.nonzero()
@@ -27,6 +30,9 @@ class Edges:
 class Neighbors:
     def __init__(self, matrix):
         self.matrix = matrix
+
+    def __repr__(self):
+        return "<Neighbors [{} nodes]>".format(self.matrix.shape[0])
 
     def __getitem__(self, node):
         return self.matrix.getrow(node).nonzero()[1]
@@ -48,6 +54,9 @@ class Graph:
 
     def __repr__(self):
         return "<Graph {}>".format(list(self.data.columns))
+
+    def __iter__(self):
+        return iter(self.nodes)
 
     @property
     def nodes(self):
@@ -73,4 +82,6 @@ def random_spanning_tree(graph):
     weights = numpy.random.random(len(row_indices))
     weighted_matrix = csr_matrix((weights, (row_indices, col_indices)))
     tree = minimum_spanning_tree(weighted_matrix)
-    return Graph(tree + tree.T, data=graph.data)
+    tree += tree.T
+    tree.sum_duplicates()
+    return Graph(tree, data=graph.data)
