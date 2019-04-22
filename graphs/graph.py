@@ -1,43 +1,76 @@
-from scipy.sparse import dok_matrix
-from numpy import nonzero
+from scipy.sparse import dok_matrix, csr_matrix
+from scipy.sparse.csgraph import minimum_spanning_tree
+from itertools import chain
+import pandas
+import numpy
 
 
-class EdgeSet:
-    def __init__(self, edges):
-        self.edges = set(tuple(sorted(edge)) for edge in edges)
+class Edges:
+    def __init__(self, matrix):
+        self.matrix = matrix
+
+    def __repr__(self):
+        return "<Edges {}>".format(list(self))
 
     def __contains__(self, edge):
-        return tuple(sorted(edge)) in self.edges
+        return bool(self.matrix[edge])
 
     def __iter__(self):
-        return iter(self.edges)
+        row, col = self.matrix.nonzero()
+        above_diagonal = row < col
+        return zip(row[above_diagonal], col[above_diagonal])
+
+    def __len__(self):
+        return self.matrix.count_nonzero() // 2
 
 
 class Neighbors:
-    def __init__(self, index, pairs):
-        self.index = index
-        matrix = dok_matrix((len(index), len(index)))
-        for node, neighbor in pairs:
-            i, j = index.get_loc(node), index.get_loc(neighbor)
-            matrix[i, j] = 1
-            matrix[j, i] = 1
-        self._matrix = matrix.tocsr()
+    def __init__(self, matrix):
+        self.matrix = matrix
 
     def __getitem__(self, node):
-        i = self.index.get_loc(node)
-        indices = self._matrix.getrow(i).nonzero()[1]
-        return self.index[indices]
+        return self.matrix.getrow(node).nonzero()[1]
 
 
 class Graph:
-    def __init__(self, nodes, edges, data):
-        if set(nodes) != set(data.index):
-            raise IndexError("Graph data must be indexed by the graph's nodes")
-        self.nodes = set(nodes)
-        self.edges = set(edges)
-        self.data = data
+    def __init__(self, matrix, data=None):
+        if data is None:
+            size = matrix.shape[0]
+            data = pandas.DataFrame(index=pandas.RangeIndex(start=0, stop=size))
 
-        self.neighbors = Neighbors(data.index, edges)
+        if matrix.shape != (len(data.index), len(data.index)):
+            raise IndexError("Graph data must be indexed by the graph's nodes")
+
+        self.matrix = matrix.tocsr()
+        self.data = data
+        self.edges = Edges(matrix)
+        self.neighbors = Neighbors(matrix)
 
     def __repr__(self):
         return "<Graph {}>".format(list(self.data.columns))
+
+    @property
+    def nodes(self):
+        return self.data.index
+
+    @classmethod
+    def from_edges(cls, edges, data=None):
+        if data is None:
+            size = max(chain(*edges)) + 1
+        else:
+            size = len(data)
+
+        matrix = dok_matrix((size, size))
+        for node, neighbor in edges:
+            matrix[node, neighbor] = 1
+            matrix[neighbor, node] = 1
+
+        return cls(matrix.tocsr(), data)
+
+
+def random_spanning_tree(graph):
+    row_indices, col_indices = graph.matrix.nonzero()
+    weights = numpy.random.random(len(row_indices))
+    weighted_matrix = csr_matrix((weights, (row_indices, col_indices)))
+    tree = minimum_spanning_tree(weighted_matrix)
+    return Graph(tree + tree.T, data=graph.data)
