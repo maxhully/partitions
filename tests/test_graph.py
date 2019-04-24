@@ -15,6 +15,30 @@ def graph():
     )
 
 
+@pytest.fixture
+def k4():
+    return Graph.from_edges([(0, 1), (1, 2), (2, 3), (3, 0), (0, 2), (1, 3)])
+
+
+@pytest.fixture
+def nonregular():
+    """
+    0  3
+    | /|
+    1--5
+    | /|
+    2--4
+    """
+    return Graph.from_edges(
+        [(0, 1), (1, 2), (5, 1), (1, 3), (4, 2), (5, 2), (5, 4), (3, 5)]
+    )
+
+
+@pytest.fixture
+def four_cycle():
+    return Graph.from_edges([(0, 1), (1, 2), (2, 3), (3, 0)])
+
+
 class TestGraph:
     def test_init(self, graph):
         assert graph
@@ -56,9 +80,45 @@ class TestNeighbors:
         neighbors = Neighbors(graph.matrix)
         assert repr(neighbors) == "<Neighbors [3 nodes]>"
 
+    def test_neighbors_k4(self, k4):
+        neighbors = Neighbors(k4.matrix)
+        assert set(neighbors[0]) == {1, 2, 3}
+        assert set(neighbors[1]) == {0, 2, 3}
+        assert set(neighbors[2]) == {0, 1, 3}
+        assert set(neighbors[3]) == {1, 2, 0}
+        for node in range(4):
+            assert len(neighbors[node]) == 3
 
-def test_random_spanning_tree():
-    tree = random_spanning_tree(Graph.from_edges([(0, 1), (1, 2), (2, 3), (3, 0)]))
-    print(tree.matrix)
-    assert len(tree.nodes) == 4
-    assert len(tree.edges) == 3
+    def test_neighbors_nonregular(self, nonregular):
+        neighbors = Neighbors(nonregular.matrix)
+        assert set(neighbors[0]) == {1}
+        assert set(neighbors[1]) == {0, 3, 5, 2}
+        assert set(neighbors[2]) == {1, 4, 5}
+        assert set(neighbors[3]) == {1, 5}
+        assert set(neighbors[4]) == {2, 5}
+        assert set(neighbors[5]) == {1, 2, 3, 4}
+
+
+class TestRandomSpanningTree:
+    def test_on_four_cycle(self, four_cycle):
+        tree = random_spanning_tree(four_cycle)
+        assert len(tree.nodes) == 4
+        assert len(tree.edges) == 3
+
+    def test_on_nonregular(self, nonregular):
+        tree = random_spanning_tree(nonregular)
+        assert len(tree.nodes) == 6
+        assert len(tree.edges) == 5
+        # This edge has to be in it, because 0 is a leaf
+        assert (0, 1) in tree.edges
+        assert (1, 0) in tree.edges
+        # One of these must be in it
+        assert (1, 3) in tree.edges or (3, 5) in tree.edges
+        # One of these must be in it
+        assert any(edge in tree.edges for edge in [(2, 4), (2, 5), (2, 1)])
+
+        for node in nonregular:
+            assert any(
+                (node, neighbor) in tree.edges
+                for neighbor in nonregular.neighbors[node]
+            )

@@ -1,4 +1,4 @@
-from scipy.sparse import dok_matrix, csr_matrix
+from scipy.sparse import dok_matrix, csr_matrix, triu
 from scipy.sparse.csgraph import minimum_spanning_tree
 from itertools import chain
 import pandas
@@ -7,24 +7,24 @@ import numpy
 
 class Edges:
     def __init__(self, matrix):
-        self.matrix = matrix
+        self.matrix = triu(matrix, format="csr")
 
     def __repr__(self):
         return "<Edges {}>".format(list(self))
 
     def __contains__(self, edge):
+        i, j = edge
         try:
-            return bool(self.matrix[edge])
+            return bool(self.matrix[i, j]) or bool(self.matrix[j, i])
         except IndexError:
             return False
 
     def __iter__(self):
         row, col = self.matrix.nonzero()
-        above_diagonal = row < col
-        return zip(row[above_diagonal], col[above_diagonal])
+        return zip(row, col)
 
     def __len__(self):
-        return self.matrix.count_nonzero() // 2
+        return self.matrix.count_nonzero()
 
 
 class Neighbors:
@@ -83,5 +83,4 @@ def random_spanning_tree(graph):
     weighted_matrix = csr_matrix((weights, (row_indices, col_indices)))
     tree = minimum_spanning_tree(weighted_matrix)
     tree += tree.T
-    tree.sum_duplicates()
-    return Graph(tree, data=graph.data)
+    return Graph(tree.astype(bool), data=graph.data)
