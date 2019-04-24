@@ -1,8 +1,6 @@
-from scipy.sparse import dok_matrix, csr_matrix, triu
-from scipy.sparse.csgraph import minimum_spanning_tree
+from scipy.sparse import dok_matrix, triu
 from itertools import chain
 import pandas
-import numpy
 
 
 class Edges:
@@ -58,6 +56,9 @@ class Graph:
     def __iter__(self):
         return iter(self.nodes)
 
+    def __len__(self):
+        return len(self.data.index)
+
     @property
     def nodes(self):
         return self.data.index
@@ -75,12 +76,3 @@ class Graph:
             matrix[neighbor, node] = 1
 
         return cls(matrix.tocsr(), data)
-
-
-def random_spanning_tree(graph):
-    row_indices, col_indices = graph.matrix.nonzero()
-    weights = numpy.random.random(len(row_indices))
-    weighted_matrix = csr_matrix((weights, (row_indices, col_indices)))
-    tree = minimum_spanning_tree(weighted_matrix)
-    tree += tree.T
-    return Graph(tree.astype(bool), data=graph.data)

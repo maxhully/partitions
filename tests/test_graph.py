@@ -1,5 +1,6 @@
 from graphs import Graph
-from graphs.graph import random_spanning_tree, Edges, Neighbors
+from graphs.graph import Edges, Neighbors
+from graphs.tree import random_spanning_tree
 from scipy.sparse import dok_matrix
 import pandas
 import pytest
@@ -60,6 +61,9 @@ class TestGraph:
 
     def test_iter_iterates_nodes(self, graph):
         assert list(graph) == [0, 1, 2]
+
+    def test_len_equals_number_of_nodes(self, nonregular):
+        assert len(nonregular) == 6
 
 
 class TestEdges:
