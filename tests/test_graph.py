@@ -1,5 +1,5 @@
 from graphs import Graph
-from graphs.graph import Edges, Neighbors
+from graphs.graph import Edges, Neighbors, subgraph_matrix
 from graphs.tree import random_spanning_tree
 from scipy.sparse import dok_matrix
 import pandas
@@ -65,6 +65,10 @@ class TestGraph:
     def test_len_equals_number_of_nodes(self, nonregular):
         assert len(nonregular) == 6
 
+    def test_can_create_from_an_iterable_of_edges(self):
+        graph = Graph.from_edges((i, i + 1) for i in range(10))
+        assert len(graph) == 11
+
 
 class TestEdges:
     def test_repr(self, graph):
@@ -126,3 +130,11 @@ class TestRandomSpanningTree:
                 (node, neighbor) in tree.edges
                 for neighbor in nonregular.neighbors[node]
             )
+
+
+def test_subgraph_matrix(four_cycle):
+    nodes = [1, 2, 3]
+    matrix = subgraph_matrix(four_cycle.matrix, nodes)
+    print(matrix.toarray())
+    assert matrix.shape == (3, 3)
+

@@ -71,6 +71,23 @@ True
 
 ```
 
+### Subgraph
+
+```python
+>>> subgraph = graph.subgraph({1, 2})
+>>> subgraph.data["population"]
+0    200
+1     50
+Name: population, dtype: int64
+
+>>> list(subgraph.edges)
+[(0, 1)]
+
+>>> subgraph
+<EmbeddedGraph [2 nodes]>
+
+```
+
 ## Partitioning a graph
 
 ```python

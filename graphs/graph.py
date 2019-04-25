@@ -1,6 +1,8 @@
-from scipy.sparse import dok_matrix, triu
 from itertools import chain
+
+import numpy
 import pandas
+from scipy.sparse import csr_matrix, dok_matrix, triu
 
 
 class Edges:
@@ -36,6 +38,16 @@ class Neighbors:
         return self.matrix.getrow(node).nonzero()[1]
 
 
+def subgraph_matrix(matrix, nodes):
+    subgraph_size = len(nodes)
+    nodes = numpy.asarray(nodes)
+    transformation = csr_matrix(
+        (numpy.ones(subgraph_size), (nodes, numpy.arange(subgraph_size))),
+        shape=(matrix.shape[0], subgraph_size),
+    )
+    return transformation.T @ matrix @ transformation
+
+
 class Graph:
     def __init__(self, matrix, data=None):
         if data is None:
@@ -59,12 +71,25 @@ class Graph:
     def __len__(self):
         return len(self.data.index)
 
+    def subgraph(self, nodes):
+        nodes = list(nodes)
+
+        matrix = subgraph_matrix(self.matrix, nodes)
+
+        subgraph_data = self.data.loc[nodes]
+        subgraph_data.reset_index(inplace=True)
+        node_mapping = subgraph_data.pop("index")
+
+        return EmbeddedGraph(matrix, node_mapping, data=subgraph_data)
+
     @property
     def nodes(self):
         return self.data.index
 
     @classmethod
     def from_edges(cls, edges, data=None):
+        edges = list(edges)
+
         if data is None:
             size = max(chain(*edges)) + 1
         else:
@@ -76,3 +101,12 @@ class Graph:
             matrix[neighbor, node] = 1
 
         return cls(matrix.tocsr(), data)
+
+
+class EmbeddedGraph(Graph):
+    def __init__(self, matrix, node_mapping, data=None):
+        super().__init__(matrix, data)
+        self.embedding = node_mapping
+
+    def __repr__(self):
+        return "<EmbeddedGraph [{} nodes]>".format(len(self))
