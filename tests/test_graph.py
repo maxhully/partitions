@@ -40,6 +40,16 @@ class TestGraph:
         graph = Graph(matrix)
         assert graph.matrix is matrix
 
+    def test_subgraph(self, nonregular):
+        subgraph = nonregular.subgraph({0, 1, 5, 2})
+        assert isinstance(subgraph, EmbeddedGraph)
+        assert set(subgraph.embedding[subgraph.nodes]) == {0, 1, 2, 5}
+
+        embedded_edges = {
+            tuple(subgraph.embedding[list(edge)]) for edge in subgraph.edges
+        }
+        assert embedded_edges == {(1, 5), (0, 1), (2, 5), (1, 2)}
+
 
 class TestEdges:
     def test_repr(self, graph):
@@ -69,16 +79,6 @@ class TestEdges:
         edges = Edges(symmetric_matrix)
         actual_support = edges.matrix.toarray() > 0
         assert numpy.all(actual_support == expected_support)
-
-    def test_subgraph(self, nonregular):
-        subgraph = nonregular.subgraph({0, 1, 5, 2})
-        assert isinstance(subgraph, EmbeddedGraph)
-        assert set(subgraph.embedding[subgraph.nodes]) == {0, 1, 2, 5}
-
-        embedded_edges = {
-            tuple(subgraph.embedding[list(edge)]) for edge in subgraph.edges
-        }
-        assert embedded_edges == {(1, 5), (0, 1), (2, 5), (1, 2)}
 
 
 class TestNeighbors:
@@ -118,6 +118,15 @@ class TestNeighbors:
 
         assert numpy.all(actual_support == expected_support)
 
+        def test_implements_sequence(self, matrix):
+            neighbors = Neighbors(matrix)
+            # __len__
+            assert len(neighbors) == 3
+            # __getitem__
+            assert all(neighbors[i] is not None for i in range(len(neighbors)))
+            # __iter__
+            assert list(neighbors)
+
 
 class TestSubgraphMatrix:
     def test_matrix_shape(self, four_cycle):
@@ -135,8 +144,6 @@ class TestSubgraphMatrix:
         expected[1, 2] = 1
         expected[2, 1] = 1
 
-        print(matrix)
-        print(expected)
         assert numpy.all(matrix.toarray() == expected.toarray())
 
 

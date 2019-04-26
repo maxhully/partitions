@@ -1,3 +1,4 @@
+from collections import Container, Sequence
 from itertools import chain
 
 import numpy
@@ -5,7 +6,7 @@ import pandas
 from scipy.sparse import csr_matrix, dok_matrix, triu
 
 
-class Edges:
+class Edges(Container):
     """
     :ivar matrix: Upper-triangular adjacency matrix
     :vartype matrix: :class:`scipy.sparse.csr_matrix`
@@ -32,7 +33,7 @@ class Edges:
         return self.matrix.count_nonzero()
 
 
-class Neighbors:
+class Neighbors(Sequence):
     """
     :ivar matrix: Symmetric adjacency matrix
     :vartype matrix: :class:`scipy.sparse.csr_matrix`
