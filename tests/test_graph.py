@@ -1,5 +1,5 @@
 from graphs import Graph
-from graphs.graph import Edges, Neighbors, subgraph_matrix
+from graphs.graph import Edges, Neighbors, EmbeddedGraph, subgraph_matrix
 from graphs.tree import random_spanning_tree
 from scipy.sparse import dok_matrix, csr_matrix
 import pandas
@@ -69,6 +69,16 @@ class TestEdges:
         edges = Edges(symmetric_matrix)
         actual_support = edges.matrix.toarray() > 0
         assert numpy.all(actual_support == expected_support)
+
+    def test_subgraph(self, nonregular):
+        subgraph = nonregular.subgraph({0, 1, 5, 2})
+        assert isinstance(subgraph, EmbeddedGraph)
+        assert set(subgraph.embedding[subgraph.nodes]) == {0, 1, 2, 5}
+
+        embedded_edges = {
+            tuple(subgraph.embedding[list(edge)]) for edge in subgraph.edges
+        }
+        assert embedded_edges == {(1, 5), (0, 1), (2, 5), (1, 2)}
 
 
 class TestNeighbors:
@@ -153,3 +163,9 @@ class TestSubgraphMatrix:
         print(matrix)
         print(expected)
         assert numpy.all(matrix.toarray() == expected.toarray())
+
+
+class TestEmbeddedGraph:
+    def test_repr(self, k4):
+        subgraph = k4.subgraph([1, 2, 3])
+        assert repr(subgraph) == "<EmbeddedGraph [3 nodes]>"
