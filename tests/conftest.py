@@ -1,6 +1,8 @@
-from graphs import Graph
 import pandas
 import pytest
+from scipy.sparse import dok_matrix
+
+from graphs import Graph
 
 
 @pytest.fixture
@@ -35,3 +37,11 @@ def nonregular():
 @pytest.fixture
 def four_cycle():
     return Graph.from_edges([(0, 1), (1, 2), (2, 3), (3, 0)])
+
+
+@pytest.fixture
+def matrix():
+    matrix = dok_matrix((3, 3))
+    matrix[0, 1] = 1
+    matrix[1, 2] = 1
+    return matrix

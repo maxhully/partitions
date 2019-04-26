@@ -1,8 +1,9 @@
 from graphs import Graph
 from graphs.graph import Edges, Neighbors, subgraph_matrix
 from graphs.tree import random_spanning_tree
-from scipy.sparse import dok_matrix
+from scipy.sparse import dok_matrix, csr_matrix
 import pandas
+import numpy
 import pytest
 
 
@@ -35,6 +36,10 @@ class TestGraph:
         graph = Graph.from_edges((i, i + 1) for i in range(10))
         assert len(graph) == 11
 
+    def test_keeps_original_matrix(self, matrix):
+        graph = Graph(matrix)
+        assert graph.matrix is matrix
+
 
 class TestEdges:
     def test_repr(self, graph):
@@ -47,6 +52,23 @@ class TestEdges:
 
     def test_does_not_contain_nodes_not_in_graph(self, graph):
         assert (8, 10) not in graph.edges
+
+    def test_stores_matrix_as_csr(self, matrix):
+        edges = Edges(matrix)
+        assert isinstance(edges.matrix, csr_matrix)
+
+    def test_matrix_is_upper_triangular(self):
+        matrix = numpy.array([[0, 1, 1], [0, 0, 1], [0, 0, 0]])
+        expected_support = matrix > 0
+
+        edges = Edges(matrix)
+        actual_support = edges.matrix.toarray() > 0
+        assert numpy.all(actual_support == expected_support)
+
+        symmetric_matrix = numpy.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]])
+        edges = Edges(symmetric_matrix)
+        actual_support = edges.matrix.toarray() > 0
+        assert numpy.all(actual_support == expected_support)
 
 
 class TestNeighbors:
@@ -71,6 +93,20 @@ class TestNeighbors:
         assert set(neighbors[3]) == {1, 5}
         assert set(neighbors[4]) == {2, 5}
         assert set(neighbors[5]) == {1, 2, 3, 4}
+
+    def test_stores_matrix_as_csr(self, matrix):
+        neighbors = Neighbors(matrix)
+        assert isinstance(neighbors.matrix, csr_matrix)
+
+    def test_matrix_is_symmetric(self, matrix):
+        matrix = matrix.tocsr()
+        symmetrized = matrix + matrix.T
+        expected_support = symmetrized.toarray() > 0
+
+        neighbors = Neighbors(matrix)
+        actual_support = neighbors.matrix.toarray() > 0
+
+        assert numpy.all(actual_support == expected_support)
 
 
 class TestRandomSpanningTree:
@@ -98,8 +134,22 @@ class TestRandomSpanningTree:
             )
 
 
-def test_subgraph_matrix(four_cycle):
-    nodes = [1, 2, 3]
-    matrix = subgraph_matrix(four_cycle.matrix, nodes)
-    print(matrix.toarray())
-    assert matrix.shape == (3, 3)
+class TestSubgraphMatrix:
+    def test_matrix_shape(self, four_cycle):
+        nodes = [1, 2, 3]
+        matrix = subgraph_matrix(four_cycle.matrix, nodes)
+        assert matrix.shape == (3, 3)
+
+    def test_adjacency_structure(self, nonregular):
+        nodes = [0, 1, 3]
+        matrix = subgraph_matrix(nonregular.matrix, nodes)
+
+        expected = dok_matrix((3, 3))
+        expected[0, 1] = 1
+        expected[1, 0] = 1
+        expected[1, 2] = 1
+        expected[2, 1] = 1
+
+        print(matrix)
+        print(expected)
+        assert numpy.all(matrix.toarray() == expected.toarray())

@@ -29,7 +29,7 @@ class Edges:
 
 class Neighbors:
     def __init__(self, matrix):
-        self.matrix = matrix
+        self.matrix = (matrix + matrix.T).tocsr()
 
     def __repr__(self):
         return "<Neighbors [{} nodes]>".format(self.matrix.shape[0])
@@ -47,7 +47,7 @@ class Graph:
         if matrix.shape != (len(data.index), len(data.index)):
             raise IndexError("Graph data must be indexed by the graph's nodes")
 
-        self.matrix = matrix.tocsr()
+        self.matrix = matrix
         self.data = data
         self.edges = Edges(matrix)
         self.neighbors = Neighbors(matrix)
@@ -64,7 +64,7 @@ class Graph:
     def subgraph(self, nodes):
         nodes = list(nodes)
 
-        matrix = subgraph_matrix(self.matrix, nodes)
+        matrix = subgraph_matrix(self.neighbors.matrix, nodes)
 
         subgraph_data = self.data.loc[nodes]
         subgraph_data.reset_index(inplace=True)
@@ -90,7 +90,7 @@ class Graph:
             matrix[node, neighbor] = 1
             matrix[neighbor, node] = 1
 
-        return cls(matrix.tocsr(), data)
+        return cls(matrix, data)
 
 
 # I'm not sure about this part of the interface. It seems like we should
