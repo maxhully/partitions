@@ -38,16 +38,6 @@ class Neighbors:
         return self.matrix.getrow(node).nonzero()[1]
 
 
-def subgraph_matrix(matrix, nodes):
-    subgraph_size = len(nodes)
-    nodes = numpy.asarray(nodes)
-    transformation = csr_matrix(
-        (numpy.ones(subgraph_size), (nodes, numpy.arange(subgraph_size))),
-        shape=(matrix.shape[0], subgraph_size),
-    )
-    return transformation.T @ matrix @ transformation
-
-
 class Graph:
     def __init__(self, matrix, data=None):
         if data is None:
@@ -103,10 +93,23 @@ class Graph:
         return cls(matrix.tocsr(), data)
 
 
+# I'm not sure about this part of the interface. It seems like we should
+# represent this relationship with a GraphEmbedding object, and not
+# subclass Graph. But who owns the embedding?
 class EmbeddedGraph(Graph):
     def __init__(self, matrix, node_mapping, data=None):
         super().__init__(matrix, data)
-        self.embedding = node_mapping
+        self.embedding = node_mapping.rename("embedding")
 
     def __repr__(self):
         return "<EmbeddedGraph [{} nodes]>".format(len(self))
+
+
+def subgraph_matrix(matrix, nodes):
+    subgraph_size = len(nodes)
+    nodes = numpy.asarray(nodes)
+    transformation = csr_matrix(
+        (numpy.ones(subgraph_size), (nodes, numpy.arange(subgraph_size))),
+        shape=(matrix.shape[0], subgraph_size),
+    )
+    return transformation.T @ matrix @ transformation

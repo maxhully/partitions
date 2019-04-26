@@ -68,6 +68,8 @@ Name: population, dtype: int64
 True
 >>> set(graph.neighbors[1]) == {0, 2}
 True
+>>> graph.neighbors[0]
+array([1, 2], dtype=int32)
 
 ```
 
@@ -82,9 +84,15 @@ Name: population, dtype: int64
 
 >>> list(subgraph.edges)
 [(0, 1)]
-
 >>> subgraph
 <EmbeddedGraph [2 nodes]>
+>>> subgraph.embedding[0]
+1
+
+>>> subgraph.embedding[[0, 1]]
+0    1
+1    2
+Name: embedding, dtype: int64
 
 ```
 

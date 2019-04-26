@@ -137,4 +137,3 @@ def test_subgraph_matrix(four_cycle):
     matrix = subgraph_matrix(four_cycle.matrix, nodes)
     print(matrix.toarray())
     assert matrix.shape == (3, 3)
-
