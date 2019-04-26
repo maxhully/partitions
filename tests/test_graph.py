@@ -118,14 +118,24 @@ class TestNeighbors:
 
         assert numpy.all(actual_support == expected_support)
 
-        def test_implements_sequence(self, matrix):
-            neighbors = Neighbors(matrix)
-            # __len__
-            assert len(neighbors) == 3
-            # __getitem__
-            assert all(neighbors[i] is not None for i in range(len(neighbors)))
-            # __iter__
-            assert list(neighbors)
+    def test_implements_sequence(self, matrix):
+        neighbors = Neighbors(matrix)
+        # __len__
+        assert len(neighbors) == 3
+        # __getitem__
+        assert all(neighbors[i] is not None for i in range(len(neighbors)))
+        # __iter__
+        assert list(neighbors)
+
+    def test_degrees(self, k4, nonregular, four_cycle):
+        neighbors = Neighbors(k4.matrix)
+        assert numpy.all(neighbors.degrees() == numpy.asarray([3, 3, 3, 3]))
+
+        neighbors = Neighbors(four_cycle.matrix)
+        assert numpy.all(neighbors.degrees() == numpy.asarray([2, 2, 2, 2]))
+
+        neighbors = Neighbors(nonregular.matrix)
+        assert numpy.all(neighbors.degrees() == numpy.asarray([1, 4, 3, 2, 2, 4]))
 
 
 class TestSubgraphMatrix:

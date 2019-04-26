@@ -51,6 +51,9 @@ class Neighbors(Sequence):
     def __len__(self):
         return self.matrix.shape[0]
 
+    def degrees(self):
+        return self.matrix.indptr[1:] - self.matrix.indptr[:-1]
+
 
 class Graph:
     """
