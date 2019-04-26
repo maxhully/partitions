@@ -6,6 +6,11 @@ from scipy.sparse import csr_matrix, dok_matrix, triu
 
 
 class Edges:
+    """
+    :ivar matrix: Upper-triangular adjacency matrix
+    :vartype matrix: :class:`scipy.sparse.csr_matrix`
+    """
+
     def __init__(self, matrix):
         self.matrix = triu(matrix, format="csr")
 
@@ -28,17 +33,31 @@ class Edges:
 
 
 class Neighbors:
+    """
+    :ivar matrix: Symmetric adjacency matrix
+    :vartype matrix: :class:`scipy.sparse.csr_matrix`
+    """
+
     def __init__(self, matrix):
         self.matrix = (matrix + matrix.T).tocsr()
 
     def __repr__(self):
-        return "<Neighbors [{} nodes]>".format(self.matrix.shape[0])
+        return "<Neighbors [{} nodes]>".format(len(self))
 
     def __getitem__(self, node):
         return self.matrix.getrow(node).nonzero()[1]
 
+    def __len__(self):
+        return self.matrix.shape[0]
+
 
 class Graph:
+    """
+    :ivar Edges edges:
+    :ivar Neighbors neighbors:
+    :ivar pandas.Dataframe data:
+    """
+
     def __init__(self, matrix, data=None):
         if data is None:
             size = matrix.shape[0]
