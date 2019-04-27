@@ -1,4 +1,4 @@
-from .graph import Graph, Neighbors, Edges, EmbeddedGraph
+from .graph import Boundary, Edges, EmbeddedGraph, Graph, Neighbors
 from .partition import Partition
 
-__all__ = ["Graph", "Neighbors", "Edges", "EmbeddedGraph", "Partition"]
+__all__ = ["Boundary", "Edges", "EmbeddedGraph", "Graph", "Neighbors", "Partition"]
