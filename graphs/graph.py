@@ -127,6 +127,17 @@ class EmbeddedGraph(Graph):
     def __repr__(self):
         return "<EmbeddedGraph [{} nodes]>".format(len(self))
 
+    def subgraph(self, nodes):
+        """Given a subset of nodes, returns the subgraph induced by those nodes.
+        Since we are already an EmbeddedGraph, we return an EmbeddedGraph of
+        the same graph (so that there are no subgraphs-of-subgraphs).
+        :param numpy.ndarray or iterable nodes:
+        :rtype EmbeddedGraph:
+        """
+        if not isinstance(nodes, numpy.ndarray):
+            nodes = numpy.asarray(list(nodes))
+        return EmbeddedGraph(self.graph, self.image[nodes])
+
     @property
     def cut_edges(self):
         """All of the edges in the ambient graph that have one node in this

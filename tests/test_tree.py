@@ -2,8 +2,9 @@ from graphs.tree import (
     random_spanning_tree,
     contract_leaves_until_balanced_or_None,
     bipartition_tree,
+    recursive_partition,
 )
-from graphs import Graph
+from graphs import Graph, Partition
 from scipy.sparse.csgraph import connected_components
 import numpy
 
@@ -90,13 +91,38 @@ class TestBipartitionTree:
         population = numpy.ones_like(graph.nodes)
         bounds = (30, 70)
 
-        partition = bipartition_tree(graph, population, bounds)
+        assignment = bipartition_tree(graph, population, bounds)
+        partition = Partition.from_assignment(graph, assignment)
         assert len(partition) == 2
         assert set(node for part in partition for node in part.image) == set(
             graph.nodes
         )
         for part in partition:
             assert 30 <= len(part.nodes) and len(part.nodes) <= 70
+
+        for part in partition:
+            assert connected_components(part.neighbors.matrix, return_labels=False) == 1
+
+
+class TestRecursivePartition:
+    def test_on_10x10(self):
+        edges = [(i + 10 * j, i + 10 * j + 1) for i in range(9) for j in range(10)]
+        edges += [(i + 10 * j, i + 10 * j + 10) for i in range(10) for j in range(9)]
+        graph = Graph.from_edges(edges)
+        population = numpy.ones_like(graph.nodes)
+        ideal_pop = population.sum() / 5
+        bounds = (ideal_pop * 0.8, ideal_pop * 1.2)
+
+        partition = recursive_partition(graph, 5, population, bounds)
+        assert len(partition) == 5
+        assert set(node for part in partition for node in part.image) == set(
+            graph.nodes
+        )
+        # The 0th part made up of the left-over nodes often has too much population,
+        # so we are only sure that parts >= 1 have the right population.
+        for part in list(partition)[1:]:
+            assert bounds[0] < len(part.nodes)
+            assert len(part.nodes) < bounds[1]
 
         for part in partition:
             assert connected_components(part.neighbors.matrix, return_labels=False) == 1

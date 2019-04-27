@@ -31,7 +31,6 @@ def contract_leaves_until_balanced_or_None(
 
     while len(leaves) > 0:
         leaf = leaves.popleft()
-        print(leaf)
         if (lower < pops[leaf]) and (pops[leaf] < upper):
             return assignment == leaf
         # Contract the leaf:
@@ -51,4 +50,20 @@ def bipartition_tree(graph, population, bounds):
     while assignment is None:
         tree = random_spanning_tree(graph)
         assignment = contract_leaves_until_balanced_or_None(tree, population, bounds)
+    return assignment
+
+
+def recursive_partition(
+    graph, number_of_parts, population, pop_bounds, method=bipartition_tree
+):
+    assignment = numpy.zeros_like(graph.nodes)
+    remaining = graph
+    # Count down, because we'll leave the existing zeroes as the assignment
+    # for all the remaining nodes.
+    for i in range(number_of_parts)[1:]:
+        in_part_i = method(remaining, population, pop_bounds)
+        nodes = getattr(remaining, "image", remaining.nodes)
+        assignment[nodes[in_part_i]] = i
+        remaining = graph.subgraph(graph.nodes[assignment == 0])
+
     return Partition.from_assignment(graph, assignment)
