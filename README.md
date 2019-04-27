@@ -94,17 +94,13 @@ Name: population, dtype: int64
 >>> subgraph
 <EmbeddedGraph [2 nodes]>
 >>> subgraph.embedding
-0    1
-1    2
-Name: embedding, dtype: int64
+array([1, 2], dtype=int64)
 
 >>> subgraph.embedding[0]
 1
 
 >>> subgraph.embedding[[0, 1]]
-0    1
-1    2
-Name: embedding, dtype: int64
+array([1, 2], dtype=int64)
 
 ```
 

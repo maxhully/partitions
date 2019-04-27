@@ -99,7 +99,7 @@ class Graph:
 
         subgraph_data = self.data.loc[nodes]
         subgraph_data.reset_index(inplace=True)
-        node_mapping = subgraph_data.pop("index")
+        node_mapping = subgraph_data.pop("index").to_numpy(copy=False)
 
         return EmbeddedGraph(matrix, node_mapping, data=subgraph_data)
 
@@ -159,7 +159,7 @@ class EmbeddedGraph(Graph):
 
     def __init__(self, matrix, node_mapping, data=None):
         super().__init__(matrix, data)
-        self.embedding = node_mapping.rename("embedding")
+        self.embedding = node_mapping
 
     def __repr__(self):
         return "<EmbeddedGraph [{} nodes]>".format(len(self))
