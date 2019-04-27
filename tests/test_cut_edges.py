@@ -23,3 +23,11 @@ class TestCutEdges:
 
         result = cut_edges_for_subset(nonregular, subset)
         assert set(result) == expected_edges
+
+    def test_cut_edges_for_decreasing_edges(self, four_cycle):
+        result = cut_edges_for_subset(four_cycle, numpy.asarray([2, 3]))
+        assert set(result) == {(0, 3), (1, 2)}
+
+    def test_cut_edges_for_decreasing_edges_nonregular(self, nonregular):
+        result = cut_edges_for_subset(nonregular, numpy.asarray([0, 2, 5]))
+        assert set(result) == {(0, 1), (1, 2), (2, 4), (3, 5), (4, 5), (1, 5)}

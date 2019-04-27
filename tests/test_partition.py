@@ -2,6 +2,7 @@ import numpy
 import pandas
 import pytest
 
+from graphs.graph import Graph
 from graphs.partition import Partition
 
 
@@ -114,3 +115,29 @@ class TestPartition:
     def test_updating_empty_partition_does_not_copy_data(self, partition):
         updated = partition.with_updated_parts(partition)
         assert updated.data is partition.data
+
+    def test_from_assignment_allows_for_a_subset_of_the_graph(self, nonregular):
+        assignment = {0: "a", 1: "a", 2: "b", 3: "b"}
+        assert set(assignment.keys()) < set(nonregular.nodes)
+        partition = Partition.from_assignment(nonregular, assignment)
+        assert set(partition["a"].image) == {0, 1}
+        assert set(partition["b"].image) == {2, 3}
+
+    def test_with_boundary_data(self, edges_with_data):
+        data = pandas.DataFrame({"test_data": [100, 33, 45, 78]})
+        graph = Graph.from_edges(edges_with_data, data=data)
+        partition = Partition.from_assignment(graph, {0: 1, 1: 1, 2: 0, 3: 0})
+
+        expected_boundary = (
+            edges_with_data["length"][0, 3] + edges_with_data["length"][1, 2]
+        )
+
+        assert set(partition[0].cut_edges) == set(partition[1].cut_edges)
+
+        assert partition[0].boundary.edge_data["length"] == expected_boundary
+        assert partition[1].boundary.edge_data["length"] == expected_boundary
+
+    def test_cut_edges(self, four_cycle):
+        partition = Partition.from_assignment(four_cycle, {0: 1, 1: 1, 2: 0, 3: 0})
+
+        assert set(partition[0].cut_edges) == set(partition[1].cut_edges)

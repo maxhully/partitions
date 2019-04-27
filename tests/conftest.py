@@ -45,3 +45,10 @@ def matrix():
     matrix[0, 1] = 1
     matrix[1, 2] = 1
     return matrix
+
+
+@pytest.fixture
+def edges_with_data():
+    edge_index = pandas.MultiIndex.from_tuples([(0, 1), (1, 2), (2, 3), (0, 3)])
+    edges = pandas.DataFrame({"length": [10, 21, 33, 44]}, index=edge_index)
+    return edges

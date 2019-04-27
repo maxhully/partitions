@@ -5,7 +5,7 @@ import numpy
 import pandas
 from scipy.sparse import csr_matrix, dok_matrix, triu
 
-from .cut_edges import cut_edges_for_subset
+from .cut_edges import Boundary
 
 
 class Edges(Container):
@@ -14,12 +14,13 @@ class Edges(Container):
     :vartype matrix: :class:`scipy.sparse.csr_matrix`
     """
 
-    def __init__(self, matrix):
+    def __init__(self, matrix, data=None):
         """
         :param matrix: Symmetric adjacency matrix
         :type matrix: :class:`scipy.sparse.csr_matrix`
         """
         self.matrix = triu(matrix, format="csr")
+        self.data = data
 
     def __repr__(self):
         return "<Edges {}>".format(list(self))
@@ -77,10 +78,10 @@ class Graph:
     :ivar scipy.sparse.csr_matrix matrix:
     """
 
-    def __init__(self, matrix, data=None):
+    def __init__(self, matrix, data=None, edge_data=None):
         self.matrix = matrix
         self.data = data
-        self.edges = Edges(matrix)
+        self.edges = Edges(matrix, data=edge_data)
         self.neighbors = Neighbors(matrix)
 
     def __repr__(self):
@@ -106,7 +107,7 @@ class Graph:
         return self.data.index
 
     @classmethod
-    def from_matrix(cls, matrix, data=None):
+    def from_matrix(cls, matrix, data=None, edge_data=None):
         """Create a graph from an adjacency matrix. The matrix can have
         any ``dtype`` and need not be symmetric---it will be symmetrized and
         cast to ``bool`` before instantiating the graph.
@@ -115,13 +116,14 @@ class Graph:
         matrix += matrix.T
 
         if data is None:
-            size = matrix.shape[0]
-            data = pandas.DataFrame(index=pandas.RangeIndex(start=0, stop=size))
+            data = pandas.DataFrame(
+                index=pandas.RangeIndex(start=0, stop=matrix.shape[0])
+            )
 
         if matrix.shape != (len(data.index), len(data.index)):
             raise IndexError("Graph data must be indexed by the graph's nodes")
 
-        return cls(matrix, data=data)
+        return cls(matrix, data=data, edge_data=edge_data)
 
     @classmethod
     def from_edges(cls, edges, data=None):
@@ -131,7 +133,15 @@ class Graph:
         >>> assert set(graph.edges) == {(0, 1), (1, 2), (2, 3)}
         >>> assert set(graph.nodes) == {0, 1, 2, 3}
         """
-        edges = list(edges)
+        if isinstance(edges, pandas.DataFrame):
+            edge_data, edges = edges, edges.index
+            first = edges.get_level_values(0)
+            second = edges.get_level_values(1)
+            if not (first <= second).all():
+                raise ValueError("edge data indices (i, j) must satisfy i <= j")
+        else:
+            edges = list(edges)
+            edge_data = None
 
         if data is None:
             size = max(chain(*edges)) + 1
@@ -142,12 +152,9 @@ class Graph:
         for node, neighbor in edges:
             matrix[node, neighbor] = 1
 
-        return cls.from_matrix(matrix, data)
+        return cls.from_matrix(matrix, data, edge_data)
 
 
-# I'm not sure about this part of the interface. It seems like we should
-# represent this relationship with a GraphEmbedding object, and not
-# subclass Graph. But who owns the embedding?
 class EmbeddedGraph(Graph):
     """
     :ivar numpy.ndarray image: the image of this graph's nodes in the graph
@@ -169,10 +176,14 @@ class EmbeddedGraph(Graph):
 
         self.image = image
         self.graph = graph
-        self.cut_edges = cut_edges_for_subset(graph, image)
+        self.boundary = Boundary(graph, image)
 
     def __repr__(self):
         return "<EmbeddedGraph [{} nodes]>".format(len(self))
+
+    @property
+    def cut_edges(self):
+        return self.boundary.cut_edges
 
 
 def subgraph_matrix(matrix, nodes):

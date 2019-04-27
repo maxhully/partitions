@@ -129,6 +129,18 @@ class TestNeighbors:
         neighbors = Neighbors(nonregular.matrix)
         assert numpy.all(neighbors.degrees() == numpy.asarray([1, 4, 3, 2, 2, 4]))
 
+    def test_can_have_edge_data(self):
+        edge_index = pandas.MultiIndex.from_tuples([(0, 1), (1, 2), (2, 3)])
+        edges = pandas.DataFrame({"length": [10, 20, 30]}, index=edge_index)
+        graph = Graph.from_edges(edges)
+        assert set(graph.edges.data.index) == set(graph.edges)
+
+    def test_raises_if_edge_data_indexed_incorrectly(self):
+        edge_index = pandas.MultiIndex.from_tuples([(1, 0), (1, 2), (3, 2)])
+        edges = pandas.DataFrame({"length": [10, 20, 30]}, index=edge_index)
+        with pytest.raises(ValueError):
+            Graph.from_edges(edges)
+
 
 class TestSubgraphMatrix:
     def test_matrix_shape(self, four_cycle):
@@ -153,3 +165,10 @@ class TestEmbeddedGraph:
     def test_repr(self, k4):
         subgraph = k4.subgraph([1, 2, 3])
         assert repr(subgraph) == "<EmbeddedGraph [3 nodes]>"
+
+    def test_aggregates_boundary_data_if_graph_has_edge_data(self, edges_with_data):
+        graph = Graph.from_edges(edges_with_data)
+        subgraph = graph.subgraph([0, 1])
+        expected = edges_with_data["length"][0, 3] + edges_with_data["length"][1, 2]
+        assert set(subgraph.cut_edges) == {(0, 3), (1, 2)}
+        assert subgraph.boundary.edge_data["length"] == expected
