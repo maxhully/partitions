@@ -13,6 +13,10 @@ class Edges(Container):
     """
 
     def __init__(self, matrix):
+        """
+        :param matrix: Symmetric adjacency matrix
+        :type matrix: :class:`scipy.sparse.csr_matrix`
+        """
         self.matrix = triu(matrix, format="csr")
 
     def __repr__(self):
@@ -40,7 +44,15 @@ class Neighbors(Sequence):
     """
 
     def __init__(self, matrix):
-        self.matrix = (matrix + matrix.T).tocsr()
+        """
+        :param matrix: Symmetric adjacency matrix
+        :type matrix: :class:`scipy.sparse.csr_matrix`
+
+        We assume the matrix has already been made symmetric. This minimizes the
+        complexity of the constructor and leaves open the possibility of using
+        this class for a directed graph.
+        """
+        self.matrix = matrix.tocsr(copy=False)
 
     def __repr__(self):
         return "<Neighbors [{} nodes]>".format(len(self))
@@ -59,17 +71,11 @@ class Graph:
     """
     :ivar Edges edges:
     :ivar Neighbors neighbors:
-    :ivar pandas.Dataframe data:
+    :ivar pandas.DataFrame data:
+    :ivar scipy.sparse.csr_matrix matrix:
     """
 
     def __init__(self, matrix, data=None):
-        if data is None:
-            size = matrix.shape[0]
-            data = pandas.DataFrame(index=pandas.RangeIndex(start=0, stop=size))
-
-        if matrix.shape != (len(data.index), len(data.index)):
-            raise IndexError("Graph data must be indexed by the graph's nodes")
-
         self.matrix = matrix
         self.data = data
         self.edges = Edges(matrix)
@@ -85,9 +91,11 @@ class Graph:
         return len(self.data.index)
 
     def subgraph(self, nodes):
+        """Create a subgraph of this graph.
+        """
         nodes = list(nodes)
 
-        matrix = subgraph_matrix(self.neighbors.matrix, nodes)
+        matrix = subgraph_matrix(self.edges.matrix, nodes)
 
         subgraph_data = self.data.loc[nodes]
         subgraph_data.reset_index(inplace=True)
@@ -100,7 +108,31 @@ class Graph:
         return self.data.index
 
     @classmethod
+    def from_matrix(cls, matrix, data=None):
+        """Create a graph from an adjacency matrix. The matrix can have
+        any ``dtype`` and need not be symmetric---it will be symmetrized and
+        cast to ``bool`` before instantiating the graph.
+        """
+        matrix = csr_matrix(matrix.astype(bool, copy=False), copy=False)
+        matrix += matrix.T
+
+        if data is None:
+            size = matrix.shape[0]
+            data = pandas.DataFrame(index=pandas.RangeIndex(start=0, stop=size))
+
+        if matrix.shape != (len(data.index), len(data.index)):
+            raise IndexError("Graph data must be indexed by the graph's nodes")
+
+        return cls(matrix, data=data)
+
+    @classmethod
     def from_edges(cls, edges, data=None):
+        """Create a graph from an iterable of edges.
+
+        >>> graph = Graph.from_edges([(0, 1), (1, 2), (2, 3)])
+        >>> assert set(graph.edges) == {(0, 1), (1, 2), (2, 3)}
+        >>> assert set(graph.nodes) == {0, 1, 2, 3}
+        """
         edges = list(edges)
 
         if data is None:
@@ -111,15 +143,20 @@ class Graph:
         matrix = dok_matrix((size, size))
         for node, neighbor in edges:
             matrix[node, neighbor] = 1
-            matrix[neighbor, node] = 1
 
-        return cls(matrix, data)
+        return cls.from_matrix(matrix, data)
 
 
 # I'm not sure about this part of the interface. It seems like we should
 # represent this relationship with a GraphEmbedding object, and not
 # subclass Graph. But who owns the embedding?
 class EmbeddedGraph(Graph):
+    """
+    :ivar embedding: maps the nodes of this graph into the set of nodes of the
+        graph wherein this graph is embedded.
+    :vartype embedding: pandas.Series
+    """
+
     def __init__(self, matrix, node_mapping, data=None):
         super().__init__(matrix, data)
         self.embedding = node_mapping.rename("embedding")
@@ -129,6 +166,9 @@ class EmbeddedGraph(Graph):
 
 
 def subgraph_matrix(matrix, nodes):
+    """Given an adjacency matrix and list or array of nodes, returns the
+    adjacency matrix of the induced subgraph.
+    """
     subgraph_size = len(nodes)
     nodes = numpy.asarray(nodes)
     transformation = csr_matrix(

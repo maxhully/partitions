@@ -21,7 +21,7 @@ class TestGraph:
         data = pandas.DataFrame({"population": [100, 200, 300]})
         assert len(data.index) != matrix.shape[0]
         with pytest.raises(IndexError):
-            Graph(matrix, data)
+            Graph.from_matrix(matrix, data)
 
     def test_repr(self, graph):
         assert repr(graph) == "<Graph ['population', 'votes']>"
@@ -36,7 +36,11 @@ class TestGraph:
         graph = Graph.from_edges((i, i + 1) for i in range(10))
         assert len(graph) == 11
 
-    def test_keeps_original_matrix(self, matrix):
+    def test_from_matrix_casts_matrix_to_bool(self, matrix):
+        graph = Graph.from_matrix(matrix)
+        assert graph.matrix.dtype == bool
+
+    def test_constructor_keeps_original_matrix(self, matrix):
         graph = Graph(matrix)
         assert graph.matrix is matrix
 
@@ -107,16 +111,6 @@ class TestNeighbors:
     def test_stores_matrix_as_csr(self, matrix):
         neighbors = Neighbors(matrix)
         assert isinstance(neighbors.matrix, csr_matrix)
-
-    def test_matrix_is_symmetric(self, matrix):
-        matrix = matrix.tocsr()
-        symmetrized = matrix + matrix.T
-        expected_support = symmetrized.toarray() > 0
-
-        neighbors = Neighbors(matrix)
-        actual_support = neighbors.matrix.toarray() > 0
-
-        assert numpy.all(actual_support == expected_support)
 
     def test_implements_sequence(self, matrix):
         neighbors = Neighbors(matrix)
