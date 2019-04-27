@@ -18,6 +18,8 @@ class Edges(Container):
         """
         :param matrix: Symmetric adjacency matrix
         :type matrix: :class:`scipy.sparse.csr_matrix`
+        :param pandas.DataFrame or None data: edge data, indexed by a
+            :class:`pandas.MultiIndex` whose indices (i, j) satisfy i <= j.
         """
         self.matrix = triu(matrix, format="csr")
         self.data = data
@@ -157,9 +159,16 @@ class Graph:
 
 class EmbeddedGraph(Graph):
     """
+    :ivar Edges edges:
+    :ivar Neighbors neighbors:
+    :ivar pandas.DataFrame data:
+    :ivar scipy.sparse.csr_matrix matrix:
+
     :ivar numpy.ndarray image: the image of this graph's nodes in the graph
         where this graph is embedded. That is, node ``i`` in this graph
         corresponds to node ``image[i]`` in the graph where this node is embedded.
+    :ivar Boundary boundary: the boundary nodes, edges, and data of the
+        embedded graph.
     """
 
     def __init__(self, graph, image):
@@ -183,6 +192,10 @@ class EmbeddedGraph(Graph):
 
     @property
     def cut_edges(self):
+        """All of the edges in the ambient graph that have one node in this
+        graph and one outside of it.
+        :rtype: pandas.MultiIndex
+        """
         return self.boundary.cut_edges
 
 

@@ -126,4 +126,10 @@ Name: population, dtype: int64
 >>> set(partition["a"].cut_edges)
 {(0, 1), (0, 2)}
 
+>>> set(partition["a"].boundary.nodes)
+{0}
+
+>>> set(partition["a"].boundary.neighbors)
+{1, 2}
+
 ```
