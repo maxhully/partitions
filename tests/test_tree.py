@@ -1,4 +1,8 @@
-from graphs.tree import random_spanning_tree, contract_leaves_until_balanced_or_None
+from graphs.tree import (
+    random_spanning_tree,
+    contract_leaves_until_balanced_or_None,
+    bipartition_tree,
+)
 from graphs import Graph
 from scipy.sparse.csgraph import connected_components
 import numpy
@@ -76,3 +80,23 @@ class TestContractEdgesUntilBalanced:
         bounds = (3, 5)
         assignment = contract_leaves_until_balanced_or_None(graph, population, bounds)
         assert assignment is None
+
+
+class TestBipartitionTree:
+    def test_on_10x10(self):
+        edges = [(i + 10 * j, i + 10 * j + 1) for i in range(9) for j in range(10)]
+        edges += [(i + 10 * j, i + 10 * j + 10) for i in range(10) for j in range(9)]
+        graph = Graph.from_edges(edges)
+        population = numpy.ones_like(graph.nodes)
+        bounds = (30, 70)
+
+        partition = bipartition_tree(graph, population, bounds)
+        assert len(partition) == 2
+        assert set(node for part in partition for node in part.image) == set(
+            graph.nodes
+        )
+        for part in partition:
+            assert 30 <= len(part.nodes) and len(part.nodes) <= 70
+
+        for part in partition:
+            assert connected_components(part.neighbors.matrix, return_labels=False) == 1

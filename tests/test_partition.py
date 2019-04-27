@@ -141,3 +141,11 @@ class TestPartition:
         partition = Partition.from_assignment(four_cycle, {0: 1, 1: 1, 2: 0, 3: 0})
 
         assert set(partition[0].cut_edges) == set(partition[1].cut_edges)
+
+    def test_can_reindex(self, partition):
+        new_partition = partition.reindex({0: "a", 1: "b"})
+        assert set(new_partition.parts.keys()) == {"a", "b"}
+
+    def test_can_reindex_in_place(self, partition):
+        partition.reindex({0: "a", 1: "b"}, in_place=True)
+        assert set(partition.parts.keys()) == {"a", "b"}

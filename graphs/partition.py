@@ -1,8 +1,7 @@
 import pandas
-from collections.abc import Mapping
 
 
-class Partition(Mapping):
+class Partition:
     def __init__(self, parts, data=None):
         if data is None:
             data = pandas.DataFrame(index=pandas.RangeIndex(start=0, stop=len(parts)))
@@ -47,6 +46,13 @@ class Partition(Mapping):
             # If our data is empty, we stay empty.
             updated_data = self.data
         return Partition(updated_parts, data=updated_data)
+
+    def reindex(self, new_keys, in_place=False):
+        reindexed_parts = {new_keys[key]: part for key, part in self.parts.items()}
+        if in_place is True:
+            self.parts = reindexed_parts
+        else:
+            return Partition(reindexed_parts, self.data)
 
     @classmethod
     def from_assignment(cls, graph, assignment):

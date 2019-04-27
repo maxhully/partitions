@@ -5,6 +5,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree, breadth_first_order
 
 from .graph import Graph
+from .partition import Partition
 
 
 def random_spanning_tree(graph):
@@ -30,15 +31,24 @@ def contract_leaves_until_balanced_or_None(
 
     while len(leaves) > 0:
         leaf = leaves.popleft()
+        print(leaf)
         if (lower < pops[leaf]) and (pops[leaf] < upper):
             return assignment == leaf
         # Contract the leaf:
         parent = pred[leaf]
         pops[parent] += pops[leaf]
-        assignment[leaf] = parent
+        assignment[assignment == leaf] = parent
         degrees[parent] -= 1
 
         if degrees[parent] == 1 and parent != root:
             leaves.append(parent)
 
     return None
+
+
+def bipartition_tree(graph, population, bounds):
+    assignment = None
+    while assignment is None:
+        tree = random_spanning_tree(graph)
+        assignment = contract_leaves_until_balanced_or_None(tree, population, bounds)
+    return Partition.from_assignment(graph, assignment)
