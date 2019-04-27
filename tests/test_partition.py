@@ -29,6 +29,12 @@ class TestPartition:
         assert len(partition) == 2
         assert check_embedding_of_parts(partition, k4.nodes)
 
+    def test_from_assignment_allows_any_indices(self, k4):
+        assignment = numpy.asarray(["a", "a", "b", "b"])
+        partition = Partition.from_assignment(k4, assignment)
+        assert set(partition["a"].embedding) == {0, 1}
+        assert set(partition["b"].embedding) == {2, 3}
+
     def test_from_parts(self, nonregular):
         nonregular.data = pandas.DataFrame({"data1": [100, 200, 100, 300, 400, 300]})
         part1 = nonregular.subgraph([0, 1, 2])
@@ -104,3 +110,7 @@ class TestPartition:
         new_partition = partition.with_updated_parts(updates)
         assert new_partition.data["test_data"][1] == 93
         assert new_partition.data["test_data"][2] == 186
+
+    def test_updating_empty_partition_does_not_copy_data(self, partition):
+        updated = partition.with_updated_parts(partition)
+        assert updated.data is partition.data
