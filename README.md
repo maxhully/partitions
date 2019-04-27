@@ -3,8 +3,10 @@
 ## Project goals
 
 -   Compatibility with the pandas/numpy/scipy stack
--   Keep the door open for extending with Cython
--   Present an intuitive interface
+-   Intuitive interface. The user can work with nodes, edges, neighbors instead
+    of directly with CSR matrices.
+-   Keep the door open for extensions (including with Cython) by providing the
+    sparse adjacency matrices as part of the public interface.
 -   Prioritize efficiency in "big" operations (like generating spanning trees)
     over "small" and mutable operations (like adding an edge to the graph)
 
@@ -93,14 +95,14 @@ Name: population, dtype: int64
 [(0, 1)]
 >>> subgraph
 <EmbeddedGraph [2 nodes]>
->>> subgraph.embedding
-array([1, 2], dtype=int64)
+>>> subgraph.image
+array([1, 2])
 
->>> subgraph.embedding[0]
+>>> subgraph.image[0]
 1
 
->>> subgraph.embedding[[0, 1]]
-array([1, 2], dtype=int64)
+>>> subgraph.image[[0, 1]]
+array([1, 2])
 
 ```
 
@@ -108,21 +110,20 @@ array([1, 2], dtype=int64)
 
 ```python
 >>> from graphs import Partition
->>> partition = Partition.from_assignment(graph, {0: 0, 1: 1, 2: 1})
+>>> partition = Partition.from_assignment(graph, {0: "a", 1: "b", 2: "b"})
 >>> partition
 <Partition [2]>
 >>> for part in partition:
-...     print(set(part.embedding[part.nodes]))
+...     print(set(part.image[part.nodes]))
 {0}
 {1, 2}
 
 >>> partition.data["population"]
-0    100
-1    250
+a    100
+b    250
 Name: population, dtype: int64
 
-# >>> set(partition["a"].cut_edges)
-# {(0, 1), (0, 2)}
-# >>> set(partition.cut_edges["a", "b"])
-# {(0, 1), (0, 2)}
+>>> set(partition["a"].cut_edges)
+{(0, 1), (0, 2)}
+
 ```

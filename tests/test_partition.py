@@ -18,7 +18,7 @@ def check_embedding_of_parts(partition, expected_nodes):
     """
     re_embedded_nodes = set()
     for part in partition:
-        re_embedded_nodes.update(part.embedding[part.nodes])
+        re_embedded_nodes.update(part.image[part.nodes])
     return re_embedded_nodes == set(expected_nodes)
 
 
@@ -32,8 +32,8 @@ class TestPartition:
     def test_from_assignment_allows_any_indices(self, k4):
         assignment = numpy.asarray(["a", "a", "b", "b"])
         partition = Partition.from_assignment(k4, assignment)
-        assert set(partition["a"].embedding) == {0, 1}
-        assert set(partition["b"].embedding) == {2, 3}
+        assert set(partition["a"].image) == {0, 1}
+        assert set(partition["b"].image) == {2, 3}
 
     def test_from_parts(self, nonregular):
         nonregular.data = pandas.DataFrame({"data1": [100, 200, 100, 300, 400, 300]})

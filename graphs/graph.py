@@ -5,6 +5,8 @@ import numpy
 import pandas
 from scipy.sparse import csr_matrix, dok_matrix, triu
 
+from .cut_edges import cut_edges_for_subset
+
 
 class Edges(Container):
     """
@@ -91,17 +93,13 @@ class Graph:
         return len(self.data.index)
 
     def subgraph(self, nodes):
-        """Create a subgraph of this graph.
+        """Given a subset of nodes, returns the subgraph induced by those nodes.
+        :param numpy.ndarray or iterable nodes:
+        :rtype EmbeddedGraph:
         """
-        nodes = list(nodes)
-
-        matrix = subgraph_matrix(self.edges.matrix, nodes)
-
-        subgraph_data = self.data.loc[nodes]
-        subgraph_data.reset_index(inplace=True)
-        node_mapping = subgraph_data.pop("index").to_numpy(copy=False)
-
-        return EmbeddedGraph(matrix, node_mapping, data=subgraph_data)
+        if not isinstance(nodes, numpy.ndarray):
+            nodes = numpy.asarray(list(nodes))
+        return EmbeddedGraph(self, nodes)
 
     @property
     def nodes(self):
@@ -152,14 +150,26 @@ class Graph:
 # subclass Graph. But who owns the embedding?
 class EmbeddedGraph(Graph):
     """
-    :ivar embedding: maps the nodes of this graph into the set of nodes of the
-        graph wherein this graph is embedded.
-    :vartype embedding: pandas.Series
+    :ivar numpy.ndarray image: the image of this graph's nodes in the graph
+        where this graph is embedded. That is, node ``i`` in this graph
+        corresponds to node ``image[i]`` in the graph where this node is embedded.
     """
 
-    def __init__(self, matrix, node_mapping, data=None):
+    def __init__(self, graph, image):
+        """
+        :param Graph graph: the graph where this graph is embedded.
+        :param numpy.ndarray image: the nodes in ``graph`` that this graph's
+            nodes are mapped to.
+        """
+        matrix = subgraph_matrix(graph.matrix, image)
+        data = graph.data.loc[image]
+        data.reset_index(inplace=True, drop=True)
+
         super().__init__(matrix, data)
-        self.embedding = node_mapping
+
+        self.image = image
+        self.graph = graph
+        self.cut_edges = cut_edges_for_subset(graph, image)
 
     def __repr__(self):
         return "<EmbeddedGraph [{} nodes]>".format(len(self))
@@ -170,7 +180,6 @@ def subgraph_matrix(matrix, nodes):
     adjacency matrix of the induced subgraph.
     """
     subgraph_size = len(nodes)
-    nodes = numpy.asarray(nodes)
     transformation = csr_matrix(
         (numpy.ones(subgraph_size), (nodes, numpy.arange(subgraph_size))),
         shape=(matrix.shape[0], subgraph_size),

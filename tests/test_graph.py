@@ -47,11 +47,9 @@ class TestGraph:
     def test_subgraph(self, nonregular):
         subgraph = nonregular.subgraph({0, 1, 5, 2})
         assert isinstance(subgraph, EmbeddedGraph)
-        assert set(subgraph.embedding[subgraph.nodes]) == {0, 1, 2, 5}
+        assert set(subgraph.image[subgraph.nodes]) == {0, 1, 2, 5}
 
-        embedded_edges = {
-            tuple(subgraph.embedding[list(edge)]) for edge in subgraph.edges
-        }
+        embedded_edges = {tuple(subgraph.image[list(edge)]) for edge in subgraph.edges}
         assert embedded_edges == {(1, 5), (0, 1), (2, 5), (1, 2)}
 
 

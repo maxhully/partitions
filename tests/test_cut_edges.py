@@ -21,6 +21,5 @@ class TestCutEdges:
         subset = numpy.asarray([0, 1, 3])
         expected_edges = {(1, 2), (1, 5), (3, 5)}
 
-        assignment = numpy.asarray([0, 0, 1, 0, 2, 2])
-        result = cut_edges_for_subset(nonregular, subset, assignment)
+        result = cut_edges_for_subset(nonregular, subset)
         assert set(result) == expected_edges
