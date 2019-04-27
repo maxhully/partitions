@@ -1,4 +1,7 @@
-from graphs.tree import random_spanning_tree
+from graphs.tree import random_spanning_tree, contract_leaves_until_balanced_or_None
+from graphs import Graph
+from scipy.sparse.csgraph import connected_components
+import numpy
 
 
 class TestRandomSpanningTree:
@@ -24,3 +27,52 @@ class TestRandomSpanningTree:
                 (node, neighbor) in tree.edges
                 for neighbor in nonregular.neighbors[node]
             )
+
+
+class TestContractEdgesUntilBalanced:
+    def test_on_10x10(self):
+        edges = [(i + 10 * j, i + 10 * j + 1) for i in range(9) for j in range(10)]
+        edges += [(10 * j, 10 * j + 10) for j in range(9)]
+        graph = Graph.from_edges(edges)
+        population = numpy.ones_like(graph.nodes)
+        bounds = (10, 90)
+
+        assignment = contract_leaves_until_balanced_or_None(graph, population, bounds)
+        assert len(assignment) == len(graph.nodes)
+        assert len(numpy.unique(assignment)) == 2
+
+        subgraph = graph.subgraph(graph.nodes[assignment])
+        assert connected_components(subgraph.neighbors.matrix, return_labels=False) == 1
+
+    def test_on_small(self):
+        graph = Graph.from_edges([(0, 1), (1, 2)])
+        population = numpy.ones_like(graph.nodes)
+        bounds = (0, 3)
+
+        assignment = contract_leaves_until_balanced_or_None(
+            graph, population, bounds, choice=lambda x: 1
+        )
+        assert assignment[0] == assignment[1] or assignment[1] == assignment[2]
+        assert len(numpy.unique(assignment)) == 2
+
+    def test_on_medium(self):
+        graph = Graph.from_edges(
+            [(0, 1), (1, 2), (2, 3), (3, 4), (0, 5), (5, 6), (5, 7), (5, 8)]
+        )
+        population = numpy.ones_like(graph.nodes)
+        bounds = (2, 7)
+
+        assignment = contract_leaves_until_balanced_or_None(graph, population, bounds)
+        assert len(numpy.unique(assignment)) == 2
+        subgraph = graph.subgraph(graph.nodes[assignment])
+        assert connected_components(subgraph.neighbors.matrix, return_labels=False) == 1
+        assert (2 <= population[assignment].sum()) and (
+            population[assignment].sum() <= 7
+        )
+
+    def test_impossible(self):
+        graph = Graph.from_edges([(0, 1), (1, 2), (2, 3)])
+        population = numpy.array([1, 5, 8, 5])
+        bounds = (3, 5)
+        assignment = contract_leaves_until_balanced_or_None(graph, population, bounds)
+        assert assignment is None
