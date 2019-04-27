@@ -1,75 +1,12 @@
-from collections import Container, Sequence
 from itertools import chain
 
 import numpy
 import pandas
-from scipy.sparse import csr_matrix, dok_matrix, triu
+from scipy.sparse import csr_matrix, dok_matrix
 
 from .cut_edges import Boundary
-
-
-class Edges(Container):
-    """
-    :ivar matrix: Upper-triangular adjacency matrix
-    :vartype matrix: :class:`scipy.sparse.csr_matrix`
-    """
-
-    def __init__(self, matrix, data=None):
-        """
-        :param matrix: Symmetric adjacency matrix
-        :type matrix: :class:`scipy.sparse.csr_matrix`
-        :param pandas.DataFrame or None data: edge data, indexed by a
-            :class:`pandas.MultiIndex` whose indices (i, j) satisfy i <= j.
-        """
-        self.matrix = triu(matrix, format="csr")
-        self.data = data
-
-    def __repr__(self):
-        return "<Edges {}>".format(list(self))
-
-    def __contains__(self, edge):
-        i, j = edge
-        try:
-            return bool(self.matrix[i, j]) or bool(self.matrix[j, i])
-        except IndexError:
-            return False
-
-    def __iter__(self):
-        row, col = self.matrix.nonzero()
-        return zip(row, col)
-
-    def __len__(self):
-        return self.matrix.count_nonzero()
-
-
-class Neighbors(Sequence):
-    """
-    :ivar matrix: Symmetric adjacency matrix
-    :vartype matrix: :class:`scipy.sparse.csr_matrix`
-    """
-
-    def __init__(self, matrix):
-        """
-        :param matrix: Symmetric adjacency matrix
-        :type matrix: :class:`scipy.sparse.csr_matrix`
-
-        We assume the matrix has already been made symmetric. This minimizes the
-        complexity of the constructor and leaves open the possibility of using
-        this class for a directed graph.
-        """
-        self.matrix = matrix.tocsr(copy=False)
-
-    def __repr__(self):
-        return "<Neighbors [{} nodes]>".format(len(self))
-
-    def __getitem__(self, node):
-        return self.matrix.getrow(node).nonzero()[1]
-
-    def __len__(self):
-        return self.matrix.shape[0]
-
-    def degrees(self):
-        return self.matrix.indptr[1:] - self.matrix.indptr[:-1]
+from .edges import Edges
+from .neighbors import Neighbors
 
 
 class Graph:
