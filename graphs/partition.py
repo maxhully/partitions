@@ -5,7 +5,6 @@ class Partition:
     def __init__(self, parts, data=None):
         if data is None:
             data = pandas.DataFrame(index=pandas.RangeIndex(start=0, stop=len(parts)))
-
         self.parts = parts
         self.data = data
 
@@ -21,6 +20,15 @@ class Partition:
     def __getitem__(self, i):
         return self.parts[i]
 
+    def keys(self):
+        return self.parts.keys()
+
+    def values(self):
+        return self.parts.values()
+
+    def items(self):
+        return self.parts.items()
+
     # These part-based methods might not work so well when we need to include
     # cut edges, unless we keep the original graph around another way.
     def with_updated_parts(self, partition):
@@ -29,9 +37,9 @@ class Partition:
         with keys not in ``partition.keys()`` are included in the new
         partition unchanged.
 
-        :param Partition or dict partition:
+        :param Partition partition:
         """
-        if isinstance(partition, dict):
+        if not isinstance(partition, Partition):
             partition = Partition.from_parts(partition)
 
         updated_parts = self.parts.copy()
@@ -45,7 +53,8 @@ class Partition:
         else:
             # If our data is empty, we stay empty.
             updated_data = self.data
-        return Partition(updated_parts, data=updated_data)
+
+        return Partition(updated_parts, updated_data)
 
     def reindex(self, new_keys, in_place=False):
         reindexed_parts = {new_keys[key]: part for key, part in self.parts.items()}

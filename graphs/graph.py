@@ -138,6 +138,15 @@ class EmbeddedGraph(Graph):
             nodes = numpy.asarray(list(nodes))
         return EmbeddedGraph(self.graph, self.image[nodes])
 
+    def union(self, subgraph):
+        if subgraph.graph is not self.graph:
+            raise ValueError(
+                "Can only create unions of EmbeddedGraphs when they are embedded in"
+                "the same graph"
+            )
+        image = numpy.vstack(self.image, subgraph.image)
+        return EmbeddedGraph(self.graph, image)
+
     @property
     def cut_edges(self):
         """All of the edges in the ambient graph that have one node in this

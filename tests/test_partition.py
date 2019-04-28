@@ -74,6 +74,9 @@ class TestPartition:
         ).all()
 
     def test_getitem(self, nonregular):
+        partition = Partition.from_assignment(
+            nonregular, {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        )
         part1 = nonregular.subgraph([0, 1, 2])
         part2 = nonregular.subgraph([3, 4, 5])
         partition = Partition.from_parts([part1, part2])
@@ -84,12 +87,11 @@ class TestPartition:
         assert repr(partition) == "<Partition [2]>"
 
     def test_can_immutably_update_parts(self, nonregular):
-        part1 = nonregular.subgraph([0, 1])
-        part2 = nonregular.subgraph([2, 3])
-        part3 = nonregular.subgraph([4, 5])
-        partition = Partition.from_parts([part1, part2, part3])
+        partition = Partition.from_assignment(
+            nonregular, {0: 0, 1: 0, 2: 1, 3: 1, 4: 2, 5: 2}
+        )
 
-        updates = {1: nonregular.subgraph([2, 4]), 2: nonregular.subgraph([3, 5])}
+        updates = Partition.from_assignment(nonregular, {2: 1, 4: 1, 3: 2, 5: 2})
 
         new_partition = partition.with_updated_parts(updates)
 
@@ -144,11 +146,11 @@ class TestPartition:
 
     def test_can_reindex(self, partition):
         new_partition = partition.reindex({0: "a", 1: "b"})
-        assert set(new_partition.parts.keys()) == {"a", "b"}
+        assert set(new_partition.keys()) == {"a", "b"}
 
     def test_can_reindex_in_place(self, partition):
         partition.reindex({0: "a", 1: "b"}, in_place=True)
-        assert set(partition.parts.keys()) == {"a", "b"}
+        assert set(partition.keys()) == {"a", "b"}
 
     def test_reindexing_reindexes_data(self, graph):
         partition = Partition.from_assignment(graph, {0: 0, 1: 1, 2: 1})
