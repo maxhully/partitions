@@ -149,3 +149,19 @@ class TestPartition:
     def test_can_reindex_in_place(self, partition):
         partition.reindex({0: "a", 1: "b"}, in_place=True)
         assert set(partition.parts.keys()) == {"a", "b"}
+
+    def test_reindexing_reindexes_data(self, graph):
+        partition = Partition.from_assignment(graph, {0: 0, 1: 1, 2: 1})
+        assert partition.data["population"][1] == 250
+        assert partition.data["population"][0] == 100
+        new_partition = partition.reindex({0: "a", 1: "b"})
+        assert new_partition.data["population"]["b"] == 250
+        assert new_partition.data["population"]["a"] == 100
+
+    def test_reindexing_in_place_reindexes_data_in_place(self, graph):
+        partition = Partition.from_assignment(graph, {0: 0, 1: 1, 2: 1})
+        assert partition.data["population"][1] == 250
+        assert partition.data["population"][0] == 100
+        partition.reindex({0: "a", 1: "b"}, in_place=True)
+        assert partition.data["population"]["b"] == 250
+        assert partition.data["population"]["a"] == 100

@@ -51,8 +51,11 @@ class Partition:
         reindexed_parts = {new_keys[key]: part for key, part in self.parts.items()}
         if in_place is True:
             self.parts = reindexed_parts
+            self.data.set_index(self.data.index.map(new_keys), inplace=True)
         else:
-            return Partition(reindexed_parts, self.data)
+            return Partition(
+                reindexed_parts, self.data.set_index(self.data.index.map(new_keys))
+            )
 
     @classmethod
     def from_assignment(cls, graph, assignment):
