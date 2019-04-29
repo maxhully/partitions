@@ -178,3 +178,31 @@ class TestEmbeddedGraph:
         subgraph_of_subgraph = subgraph.subgraph([0, 1])
         assert set(subgraph_of_subgraph.image) == {1, 2}
         assert subgraph_of_subgraph.graph is k4
+
+    def test_disjoin_union(self, nonregular):
+        subgraph1 = nonregular.subgraph([0, 1, 3])
+        subgraph2 = nonregular.subgraph([2, 5])
+        union = subgraph1.union(subgraph2, disjoint=True)
+        image_of_edges = [(union.image[i], union.image[j]) for i, j in union.edges]
+        assert len(union.edges) == 6
+        assert set(image_of_edges) == {(0, 1), (1, 2), (3, 5), (1, 3), (1, 5), (2, 5)}
+        assert len(union.image) == 5
+        assert set(union.image) == {0, 1, 2, 3, 5}
+
+    def test_union(self, nonregular):
+        subgraph1 = nonregular.subgraph([0, 1, 2, 3])
+        subgraph2 = nonregular.subgraph([1, 2, 5])
+        union = subgraph1.union(subgraph2)
+        image_of_edges = [(union.image[i], union.image[j]) for i, j in union.edges]
+        assert len(union.edges) == 6
+        assert set(image_of_edges) == {(0, 1), (1, 2), (3, 5), (1, 3), (1, 5), (2, 5)}
+        assert len(union.image) == 5
+        assert set(union.image) == {0, 1, 2, 3, 5}
+
+    def test_unions_only_work_if_from_same_graph(self, k4, nonregular):
+        subgraph1 = k4.subgraph([2])
+        subgraph2 = nonregular.subgraph([3])
+        with pytest.raises(ValueError):
+            subgraph1.union(subgraph2)
+        with pytest.raises(ValueError):
+            subgraph1.union(subgraph2, disjoint=True)

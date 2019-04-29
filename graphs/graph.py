@@ -17,11 +17,12 @@ class Graph:
     :ivar scipy.sparse.csr_matrix matrix:
     """
 
-    def __init__(self, matrix, data=None, edge_data=None):
+    def __init__(self, matrix, data=None, edge_data=None, *, agg="sum"):
         self.matrix = matrix
         self.data = data
         self.edges = Edges(matrix, data=edge_data)
         self.neighbors = Neighbors(matrix)
+        self.agg = agg
 
     def __repr__(self):
         return "<Graph {}>".format(list(self.data.columns))
@@ -32,21 +33,23 @@ class Graph:
     def __len__(self):
         return len(self.data.index)
 
-    def subgraph(self, nodes):
-        """Given a subset of nodes, returns the subgraph induced by those nodes.
-        :param numpy.ndarray or iterable nodes:
-        :rtype EmbeddedGraph:
-        """
-        if not isinstance(nodes, numpy.ndarray):
-            nodes = numpy.asarray(list(nodes))
-        return EmbeddedGraph(self, nodes)
-
     @property
     def nodes(self):
         return self.data.index
 
+    def subgraph(self, nodes, *, subgraph_class=None):
+        """Given a subset of nodes, returns the subgraph induced by those nodes.
+        :param numpy.ndarray or iterable nodes:
+        :rtype EmbeddedGraph:
+        """
+        if subgraph_class is None:
+            subgraph_class = EmbeddedGraph
+        if not isinstance(nodes, numpy.ndarray):
+            nodes = numpy.asarray(list(nodes))
+        return subgraph_class(self, nodes)
+
     @classmethod
-    def from_matrix(cls, matrix, data=None, edge_data=None):
+    def from_matrix(cls, matrix, data=None, **kwargs):
         """Create a graph from an adjacency matrix. The matrix can have
         any ``dtype`` and need not be symmetric---it will be symmetrized and
         cast to ``bool`` before instantiating the graph.
@@ -62,7 +65,7 @@ class Graph:
         if matrix.shape != (len(data.index), len(data.index)):
             raise IndexError("Graph data must be indexed by the graph's nodes")
 
-        return cls(matrix, data=data, edge_data=edge_data)
+        return cls(matrix, data=data, **kwargs)
 
     @classmethod
     def from_edges(cls, edges, data=None):
@@ -71,6 +74,16 @@ class Graph:
         >>> graph = Graph.from_edges([(0, 1), (1, 2), (2, 3)])
         >>> assert set(graph.edges) == {(0, 1), (1, 2), (2, 3)}
         >>> assert set(graph.nodes) == {0, 1, 2, 3}
+
+        To add edge data, pass your DataFrame of edge data as the ``edges`` parameter.
+
+        >>> edges = pandas.DataFrame(
+        ...     {"length" [10, 20, 30]},
+        ...     index=[(0, 1), (1, 2), (2, 3)]
+        ... )
+        >>> graph = Graph.from_edges(edges)
+        >>> graph.edge_data["length"][0, 1]
+        10
         """
         if isinstance(edges, pandas.DataFrame):
             edge_data, edges = edges, edges.index
@@ -91,7 +104,7 @@ class Graph:
         for node, neighbor in edges:
             matrix[node, neighbor] = 1
 
-        return cls.from_matrix(matrix, data, edge_data)
+        return cls.from_matrix(matrix, data, edge_data=edge_data)
 
 
 class EmbeddedGraph(Graph):
@@ -127,6 +140,14 @@ class EmbeddedGraph(Graph):
     def __repr__(self):
         return "<EmbeddedGraph [{} nodes]>".format(len(self))
 
+    @property
+    def cut_edges(self):
+        """All of the edges in the ambient graph that have one node in this
+        graph and one outside of it.
+        :rtype: pandas.MultiIndex
+        """
+        return self.boundary.cut_edges
+
     def subgraph(self, nodes):
         """Given a subset of nodes, returns the subgraph induced by those nodes.
         Since we are already an EmbeddedGraph, we return an EmbeddedGraph of
@@ -138,22 +159,36 @@ class EmbeddedGraph(Graph):
             nodes = numpy.asarray(list(nodes))
         return EmbeddedGraph(self.graph, self.image[nodes])
 
-    def union(self, subgraph):
+    def union(self, subgraph, *, disjoint=False):
         if subgraph.graph is not self.graph:
             raise ValueError(
                 "Can only create unions of EmbeddedGraphs when they are embedded in"
                 "the same graph"
             )
-        image = numpy.vstack(self.image, subgraph.image)
-        return EmbeddedGraph(self.graph, image)
+        if disjoint:
+            nodes = numpy.hstack([self.image, subgraph.image])
+        else:
+            nodes = numpy.unique(numpy.hstack([self.image, subgraph.image]))
+        return self.__class__(self.graph, nodes)
 
-    @property
-    def cut_edges(self):
-        """All of the edges in the ambient graph that have one node in this
-        graph and one outside of it.
-        :rtype: pandas.MultiIndex
-        """
-        return self.boundary.cut_edges
+
+class Part(EmbeddedGraph):
+    """
+    :ivar Edges edges:
+    :ivar Neighbors neighbors:
+    :ivar pandas.DataFrame data:
+    :ivar scipy.sparse.csr_matrix matrix:
+
+    :ivar numpy.ndarray image: the image of this graph's nodes in the graph
+        where this graph is embedded. That is, node ``i`` in this graph
+        corresponds to node ``image[i]`` in the graph where this node is embedded.
+    :ivar Boundary boundary: the boundary nodes, edges, and data of the
+        embedded graph.
+    """
+
+    def __init__(self, graph, image):
+        super().__init__(graph, image)
+        self.aggregated_data = self.data.agg(graph.agg)
 
 
 def subgraph_matrix(matrix, nodes):

@@ -54,16 +54,8 @@ class TestPartition:
 
         part1 = nonregular.subgraph([0, 1, 2])
         part2 = nonregular.subgraph([3, 4, 5])
-        partition = Partition.from_parts([part1, part2], data=data)
+        partition = Partition({0: part1, 1: part2}, data=data)
         assert list(partition.data["test_data"]) == [5, 10]
-
-    def test_from_parts_raises_for_incorrectly_indexed_data(self, nonregular):
-        part1 = nonregular.subgraph([0, 1])
-        part2 = nonregular.subgraph([2, 3])
-        part3 = nonregular.subgraph([4, 5])
-        data = pandas.DataFrame({"test_data": [1, 2]})
-        with pytest.raises(IndexError):
-            Partition.from_parts([part1, part2, part3], data=data)
 
     def test_data_in_from_assignment(self, k4):
         k4.data = pandas.DataFrame({"test_data": [20, 10, 500, 100]})

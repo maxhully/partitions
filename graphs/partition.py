@@ -1,5 +1,7 @@
 import pandas
 
+from .graph import Part
+
 
 class Partition:
     def __init__(self, parts, data=None):
@@ -22,12 +24,6 @@ class Partition:
 
     def keys(self):
         return self.parts.keys()
-
-    def values(self):
-        return self.parts.values()
-
-    def items(self):
-        return self.parts.items()
 
     # These part-based methods might not work so well when we need to include
     # cut edges, unless we keep the original graph around another way.
@@ -67,14 +63,17 @@ class Partition:
             )
 
     @classmethod
-    def from_assignment(cls, graph, assignment):
+    def from_assignment(cls, graph, assignment, *, part_class=Part):
         """This creates a Partition based on the given ``assignment``
         of nodes to parts. This is analogous to (and implemented with)
         a pandas groupby operation.
         """
         grouped = graph.data.groupby(assignment)
-        parts = {key: graph.subgraph(nodes) for key, nodes in grouped.groups.items()}
-        return cls(parts, data=grouped.sum())
+        parts = {
+            key: graph.subgraph(nodes, subgraph_class=part_class)
+            for key, nodes in grouped.groups.items()
+        }
+        return cls(parts, data=grouped.agg(graph.agg))
 
     @classmethod
     def from_parts(cls, parts, data=None):
@@ -83,11 +82,8 @@ class Partition:
         if not isinstance(parts, dict):
             parts = dict(enumerate(parts))
 
-        if data is None:
-            keys, values = zip(*parts.items())
-            data = pandas.DataFrame.from_records(
-                (part.data.sum() for part in values), index=keys
-            )
-        elif len(data.index) != len(parts):
-            raise IndexError("Partition data must be indexed by its parts")
+        data = pandas.DataFrame.from_dict(
+            {key: subgraph.data.sum() for key, subgraph in parts.items()},
+            orient="index",
+        )
         return cls(parts, data)

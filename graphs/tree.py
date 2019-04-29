@@ -67,3 +67,11 @@ def recursive_partition(
         remaining = graph.subgraph(graph.nodes[assignment == 0])
 
     return Partition.from_assignment(graph, assignment)
+
+
+def random_cut_edge(partition):
+    keys = numpy.array(partition.keys())
+    weights = numpy.array([len(part.cut_edges) for part in partition])
+    part_key = numpy.random.choice(keys, p=weights)
+    edge = numpy.random.choice(partition[part_key].cut_edges)
+
