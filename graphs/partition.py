@@ -1,16 +1,15 @@
 import pandas
 
-from .graph import Part
-
 
 class Partition:
-    part_class = Part
-
     def __init__(self, parts, data=None):
         if data is None:
             data = pandas.DataFrame(index=list(parts.keys()))
         self.parts = parts
         self.data = data
+        self.assignment = {
+            node: key for key, part in self.parts.items() for node in part.image
+        }
 
     def __repr__(self):
         return "<Partition [{}]>".format(len(self))
@@ -53,7 +52,7 @@ class Partition:
             # If our data is empty, we stay empty.
             updated_data = self.data
 
-        return Partition(updated_parts, updated_data)
+        return self.__class__(updated_parts, updated_data)
 
     def reindex(self, new_keys, in_place=False):
         reindexed_parts = {new_keys[key]: part for key, part in self.parts.items()}
@@ -61,7 +60,7 @@ class Partition:
             self.parts = reindexed_parts
             self.data.set_index(self.data.index.map(new_keys), inplace=True)
         else:
-            return Partition(
+            return self.__class__(
                 reindexed_parts, self.data.set_index(self.data.index.map(new_keys))
             )
 
@@ -72,8 +71,5 @@ class Partition:
         a pandas groupby operation.
         """
         grouped = graph.data.groupby(assignment)
-        parts = {
-            key: graph.subgraph(nodes, subgraph_class=cls.part_class)
-            for key, nodes in grouped.groups.items()
-        }
+        parts = {key: graph.subgraph(nodes) for key, nodes in grouped.groups.items()}
         return cls(parts, data=grouped.agg(graph.agg))

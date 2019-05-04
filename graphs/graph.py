@@ -37,16 +37,14 @@ class Graph:
     def nodes(self):
         return self.data.index
 
-    def subgraph(self, nodes, *, subgraph_class=None):
+    def subgraph(self, nodes):
         """Given a subset of nodes, returns the subgraph induced by those nodes.
         :param numpy.ndarray or iterable nodes:
         :rtype EmbeddedGraph:
         """
-        if subgraph_class is None:
-            subgraph_class = EmbeddedGraph
         if not isinstance(nodes, numpy.ndarray):
             nodes = numpy.asarray(list(nodes))
-        return subgraph_class(self, nodes)
+        return EmbeddedGraph(self, nodes)
 
     @classmethod
     def from_matrix(cls, matrix, data=None, **kwargs):
