@@ -21,6 +21,7 @@ def contract_leaves_until_balanced_or_None(
     degrees = tree.neighbors.degrees()
     pops = population.copy()
     lower, upper = pop_bounds
+    # Every node begins assigned to itself.
     assignment = tree.nodes.to_numpy(copy=True)
 
     root = choice(tree.nodes[degrees > 1])
@@ -78,8 +79,8 @@ def random_cut_edge(partition):
 
 
 class ReCom:
-    def __init__(self, population, bounds, method=bipartition_tree):
-        self.population = population
+    def __init__(self, pop_column, bounds, method=bipartition_tree):
+        self.pop_column = pop_column
         self.bounds = bounds
         self.method = method
 
@@ -88,7 +89,9 @@ class ReCom:
         p, q = partition.assignment[i], partition.assignment[j]
         subgraph = partition[p].union(partition[q], disjoint=True)
 
-        assignment = self.method(subgraph, self.population, self.bounds)
+        population = subgraph.data[self.pop_column]
+
+        assignment = self.method(subgraph, population, self.bounds)
 
         new_parts = partition.__class__.from_assignment(subgraph, assignment)
         new_parts.reindex({False: p, True: q}, in_place=True)

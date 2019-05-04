@@ -170,25 +170,6 @@ class EmbeddedGraph(Graph):
         return self.__class__(self.graph, nodes)
 
 
-class Part(EmbeddedGraph):
-    """
-    :ivar Edges edges:
-    :ivar Neighbors neighbors:
-    :ivar pandas.DataFrame data:
-    :ivar scipy.sparse.csr_matrix matrix:
-
-    :ivar numpy.ndarray image: the image of this graph's nodes in the graph
-        where this graph is embedded. That is, node ``i`` in this graph
-        corresponds to node ``image[i]`` in the graph where this node is embedded.
-    :ivar Boundary boundary: the boundary nodes, edges, and data of the
-        embedded graph.
-    """
-
-    def __init__(self, graph, image):
-        super().__init__(graph, image)
-        self.aggregated_data = self.data.agg(graph.agg)
-
-
 def subgraph_matrix(matrix, nodes):
     """Given an adjacency matrix and list or array of nodes, returns the
     adjacency matrix of the induced subgraph.

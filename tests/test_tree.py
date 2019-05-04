@@ -149,7 +149,7 @@ class TestReCom:
         partition = Partition.from_assignment(
             k8, dict(enumerate([0, 0, 1, 1, 2, 2, 3, 3]))
         )
-        recom = ReCom(k8.data["pop"], bounds)
+        recom = ReCom("pop", bounds)
         assert len(partition) == 4
 
         new_partition = recom(partition)
