@@ -1,8 +1,10 @@
+from itertools import combinations
+
 import pandas
 import pytest
 from scipy.sparse import dok_matrix
 
-from graphs import Graph
+from graphs import Graph, Partition
 
 
 @pytest.fixture
@@ -18,6 +20,11 @@ def graph():
 @pytest.fixture
 def k4():
     return Graph.from_edges([(0, 1), (1, 2), (2, 3), (3, 0), (0, 2), (1, 3)])
+
+
+@pytest.fixture
+def k8():
+    return Graph.from_edges(combinations(range(8), 2))
 
 
 @pytest.fixture
@@ -52,3 +59,10 @@ def edges_with_data():
     edge_index = pandas.MultiIndex.from_tuples([(0, 1), (1, 2), (2, 3), (0, 3)])
     edges = pandas.DataFrame({"length": [10, 21, 33, 44]}, index=edge_index)
     return edges
+
+
+@pytest.fixture
+def partition(nonregular):
+    part1 = nonregular.subgraph([0, 1, 2])
+    part2 = nonregular.subgraph([3, 4, 5])
+    return Partition({0: part1, 1: part2})

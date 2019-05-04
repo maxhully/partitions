@@ -1,16 +1,8 @@
 import numpy
 import pandas
-import pytest
 
 from graphs.graph import Graph
 from graphs.partition import Partition
-
-
-@pytest.fixture
-def partition(nonregular):
-    part1 = nonregular.subgraph([0, 1, 2])
-    part2 = nonregular.subgraph([3, 4, 5])
-    return Partition({0: part1, 1: part2})
 
 
 def check_embedding_of_parts(partition, expected_nodes):
