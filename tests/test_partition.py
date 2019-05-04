@@ -36,27 +36,6 @@ class TestPartition:
         assert set(partition["a"].image) == {0, 1}
         assert set(partition["b"].image) == {2, 3}
 
-    def test_from_parts(self, nonregular):
-        nonregular.data = pandas.DataFrame({"data1": [100, 200, 100, 300, 400, 300]})
-        part1 = nonregular.subgraph([0, 1, 2])
-        part2 = nonregular.subgraph([3, 4, 5])
-        partition = Partition.from_parts([part1, part2])
-        assert len(partition) == 2
-        assert check_embedding_of_parts(partition, {0, 1, 2, 3, 4, 5})
-
-        # Check aggregated data is correct
-        assert (
-            partition.data["data1"] == pandas.Series([400, 1000], index=[0, 1])
-        ).all()
-
-    def test_from_parts_with_custom_data(self, nonregular):
-        data = pandas.DataFrame({"test_data": [5, 10]})
-
-        part1 = nonregular.subgraph([0, 1, 2])
-        part2 = nonregular.subgraph([3, 4, 5])
-        partition = Partition({0: part1, 1: part2}, data=data)
-        assert list(partition.data["test_data"]) == [5, 10]
-
     def test_data_in_from_assignment(self, k4):
         k4.data = pandas.DataFrame({"test_data": [20, 10, 500, 100]})
         assignment = numpy.asarray([0, 1, 1, 0])
@@ -67,13 +46,13 @@ class TestPartition:
 
     def test_getitem(self, nonregular):
         partition = Partition.from_assignment(
-            nonregular, {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+            nonregular, {0: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 1}
         )
-        part1 = nonregular.subgraph([0, 1, 2])
-        part2 = nonregular.subgraph([3, 4, 5])
-        partition = Partition.from_parts([part1, part2])
-        assert partition[0] is part1
-        assert partition[1] is part2
+        assert set(partition[0].image) == {0, 1, 2}
+        assert set(partition[1].image) == {3, 4, 5}
+
+        for i, part in enumerate(partition):
+            assert partition[i] is part
 
     def test_repr(self, partition):
         assert repr(partition) == "<Partition [2]>"
@@ -95,12 +74,11 @@ class TestPartition:
     def test_updating_updates_data(self, nonregular):
         data = pandas.DataFrame({"test_data": [50, 100, 60, 120, 33, 66]})
         nonregular.data = data
-        part1 = nonregular.subgraph([0, 1])
-        part2 = nonregular.subgraph([2, 3])
-        part3 = nonregular.subgraph([4, 5])
-        partition = Partition.from_parts([part1, part2, part3])
+        partition = Partition.from_assignment(
+            nonregular, {0: 0, 1: 0, 2: 1, 3: 1, 4: 2, 5: 2}
+        )
 
-        updates = {1: nonregular.subgraph([2, 4]), 2: nonregular.subgraph([3, 5])}
+        updates = Partition.from_assignment(nonregular, {2: 1, 4: 1, 3: 2, 5: 2})
 
         new_partition = partition.with_updated_parts(updates)
         assert new_partition.data["test_data"][1] == 93

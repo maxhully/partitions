@@ -4,9 +4,11 @@ from .graph import Part
 
 
 class Partition:
+    part_class = Part
+
     def __init__(self, parts, data=None):
         if data is None:
-            data = pandas.DataFrame(index=pandas.RangeIndex(start=0, stop=len(parts)))
+            data = pandas.DataFrame(index=list(parts.keys()))
         self.parts = parts
         self.data = data
 
@@ -35,9 +37,6 @@ class Partition:
 
         :param Partition partition:
         """
-        if not isinstance(partition, Partition):
-            partition = Partition.from_parts(partition)
-
         updated_parts = self.parts.copy()
         updated_parts.update(partition.parts)
 
@@ -63,27 +62,14 @@ class Partition:
             )
 
     @classmethod
-    def from_assignment(cls, graph, assignment, *, part_class=Part):
+    def from_assignment(cls, graph, assignment):
         """This creates a Partition based on the given ``assignment``
         of nodes to parts. This is analogous to (and implemented with)
         a pandas groupby operation.
         """
         grouped = graph.data.groupby(assignment)
         parts = {
-            key: graph.subgraph(nodes, subgraph_class=part_class)
+            key: graph.subgraph(nodes, subgraph_class=cls.part_class)
             for key, nodes in grouped.groups.items()
         }
         return cls(parts, data=grouped.agg(graph.agg))
-
-    @classmethod
-    def from_parts(cls, parts, data=None):
-        """Create a Partition from an iterable or dictionary of parts.
-        """
-        if not isinstance(parts, dict):
-            parts = dict(enumerate(parts))
-
-        data = pandas.DataFrame.from_dict(
-            {key: subgraph.data.sum() for key, subgraph in parts.items()},
-            orient="index",
-        )
-        return cls(parts, data)
