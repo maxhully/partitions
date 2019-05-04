@@ -5,7 +5,6 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree, breadth_first_order
 
 from .graph import Graph
-from .partition import Partition
 
 
 def random_spanning_tree(graph):
@@ -66,12 +65,31 @@ def recursive_partition(
         assignment[nodes[in_part_i]] = i
         remaining = graph.subgraph(graph.nodes[assignment == 0])
 
-    return Partition.from_assignment(graph, assignment)
+    return assignment
 
 
 def random_cut_edge(partition):
-    keys = numpy.array(partition.keys())
+    keys = partition.index
     weights = numpy.array([len(part.cut_edges) for part in partition])
+    weights = weights / weights.sum()
     part_key = numpy.random.choice(keys, p=weights)
     edge = numpy.random.choice(partition[part_key].cut_edges)
+    return edge
 
+
+class ReCom:
+    def __init__(self, population, bounds, method=bipartition_tree):
+        self.population = population
+        self.bounds = bounds
+        self.method = method
+
+    def __call__(self, partition):
+        i, j = random_cut_edge(partition)
+        p, q = partition.assignment[i], partition.assignment[j]
+        subgraph = partition[p].union(partition[q], disjoint=True)
+
+        assignment = self.method(subgraph, self.population, self.bounds)
+
+        new_parts = partition.__class__.from_assignment(subgraph, assignment)
+        new_parts.reindex({False: p, True: q}, in_place=True)
+        return partition.with_updated_parts(new_parts)

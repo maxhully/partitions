@@ -3,10 +3,13 @@ from graphs.tree import (
     contract_leaves_until_balanced_or_None,
     bipartition_tree,
     recursive_partition,
+    random_cut_edge,
+    ReCom,
 )
 from graphs import Graph, Partition
 from scipy.sparse.csgraph import connected_components
 import numpy
+import pandas
 
 
 class TestRandomSpanningTree:
@@ -113,7 +116,8 @@ class TestRecursivePartition:
         ideal_pop = population.sum() / 5
         bounds = (ideal_pop * 0.8, ideal_pop * 1.2)
 
-        partition = recursive_partition(graph, 5, population, bounds)
+        assignment = recursive_partition(graph, 5, population, bounds)
+        partition = Partition.from_assignment(graph, assignment)
         assert len(partition) == 5
         assert set(node for part in partition for node in part.image) == set(
             graph.nodes
@@ -126,3 +130,31 @@ class TestRecursivePartition:
 
         for part in partition:
             assert connected_components(part.neighbors.matrix, return_labels=False) == 1
+
+
+def test_random_cut_edge(partition):
+    assert len(partition) == 2
+
+    i, j = random_cut_edge(partition)
+    assert (i in partition[0].image and j in partition[1].image) or (
+        i in partition[1].image and j in partition[0].image
+    )
+
+
+class TestReCom:
+    def test_gives_a_partition(self, k8):
+        k8.data = pandas.DataFrame({"pop": [1] * 8})
+        # Allow 1-3 nodes per part
+        bounds = (0.9, 3.1)
+        partition = Partition.from_assignment(
+            k8, dict(enumerate([0, 0, 1, 1, 2, 2, 3, 3]))
+        )
+        recom = ReCom(k8.data["pop"], bounds)
+        assert len(partition) == 4
+
+        new_partition = recom(partition)
+        assert len(new_partition) == 4
+        assert all(len(part) in {1, 2, 3} for part in new_partition)
+        nodes = list(node for part in new_partition for node in part.image)
+        assert len(nodes) == 8
+        assert set(nodes) == set(k8.nodes)
