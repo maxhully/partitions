@@ -117,10 +117,12 @@ class TestPartition:
     def test_can_reindex(self, partition):
         new_partition = partition.reindex({0: "a", 1: "b"})
         assert set(new_partition.keys()) == {"a", "b"}
+        assert list(new_partition.index) == ["a", "b"]
 
     def test_can_reindex_in_place(self, partition):
         partition.reindex({0: "a", 1: "b"}, in_place=True)
         assert set(partition.keys()) == {"a", "b"}
+        assert list(partition.index) == ["a", "b"]
 
     def test_reindexing_reindexes_data(self, graph):
         partition = Partition.from_assignment(graph, {0: 0, 1: 1, 2: 1})

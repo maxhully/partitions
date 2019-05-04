@@ -24,6 +24,10 @@ class Partition:
     def __getitem__(self, i):
         return self.parts[i]
 
+    @property
+    def index(self):
+        return self.data.index
+
     def keys(self):
         return self.parts.keys()
 
