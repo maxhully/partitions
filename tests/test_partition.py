@@ -76,10 +76,6 @@ class TestPartition:
         assert new_partition.data["test_data"][1] == 93
         assert new_partition.data["test_data"][2] == 186
 
-    def test_updating_empty_partition_does_not_copy_data(self, partition):
-        updated = partition.with_updated_parts(partition)
-        assert updated.data is partition.data
-
     def test_from_assignment_allows_for_a_subset_of_the_graph(self, nonregular):
         assignment = {0: "a", 1: "a", 2: "b", 3: "b"}
         assert set(assignment.keys()) < set(nonregular.nodes)

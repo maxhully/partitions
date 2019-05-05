@@ -5,6 +5,7 @@ from graphs.tree import (
     recursive_partition,
     random_cut_edge,
     ReCom,
+    map_with_boolean_array,
 )
 from graphs import Graph, Partition
 from scipy.sparse.csgraph import connected_components
@@ -155,6 +156,18 @@ class TestReCom:
         new_partition = recom(partition)
         assert len(new_partition) == 4
         assert all(len(part) in {1, 2, 3} for part in new_partition)
+
         nodes = list(node for part in new_partition for node in part.image)
         assert len(nodes) == 8
         assert set(nodes) == set(k8.nodes)
+
+
+def test_map_with_boolean_array():
+    array = numpy.arange(10)
+    selector = numpy.array(
+        [True, True, False, False, True, False, False, False, True, False]
+    )
+    values = {True: 4, False: 5}
+
+    result = map_with_boolean_array(array, selector, values)
+    assert result == {0: 4, 1: 4, 2: 5, 3: 5, 4: 4, 5: 5, 6: 5, 7: 5, 8: 4, 9: 5}

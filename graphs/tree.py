@@ -1,4 +1,5 @@
 from collections import deque
+from itertools import repeat, chain
 
 import numpy
 from scipy.sparse import csr_matrix
@@ -78,6 +79,20 @@ def random_cut_edge(partition):
     return edge
 
 
+def map_with_boolean_array(array, selector, values):
+    """Returns a dictionary mapping ``array[i]`` to ``values[selector[i]]``.
+
+    Uses :mod:`itertools` to effectively do the dictionary lookups in NumPy.
+    """
+    true_value, false_value = values[True], values[False]
+    return dict(
+        chain(
+            zip(array[selector], repeat(true_value)),
+            zip(array[numpy.invert(selector)], repeat(false_value)),
+        )
+    )
+
+
 class ReCom:
     def __init__(self, pop_column, bounds, method=bipartition_tree):
         self.pop_column = pop_column
@@ -91,8 +106,12 @@ class ReCom:
 
         population = subgraph.data[self.pop_column]
 
-        assignment = self.method(subgraph, population, self.bounds)
+        assignment_array = self.method(subgraph, population, self.bounds)
+        assignment = map_with_boolean_array(
+            subgraph.image, assignment_array, {False: p, True: q}
+        )
 
-        new_parts = partition.__class__.from_assignment(subgraph, assignment)
-        new_parts.reindex({False: p, True: q}, in_place=True)
+        # It is important to use subgraph.graph rather than just subgraph, so that
+        # the assignment lines up properly with graph.data and graph.nodes.
+        new_parts = partition.__class__.from_assignment(subgraph.graph, assignment)
         return partition.with_updated_parts(new_parts)
