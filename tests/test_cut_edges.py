@@ -2,7 +2,7 @@ from collections import Counter
 
 import numpy
 
-from graphs.cut_edges import cut_edges, cut_edges_for_subset, Boundary
+from partitions.cut_edges import cut_edges, cut_edges_for_subset, Boundary
 
 
 def check_cut_edges(graph, assignment, expected):

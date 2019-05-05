@@ -1,4 +1,4 @@
-from graphs.tree import (
+from partitions.tree import (
     random_spanning_tree,
     contract_leaves_until_balanced_or_None,
     bipartition_tree,
@@ -7,7 +7,7 @@ from graphs.tree import (
     ReCom,
     map_with_boolean_array,
 )
-from graphs import Graph, Partition
+from partitions import Graph, Partition
 from scipy.sparse.csgraph import connected_components
 import numpy
 import pandas

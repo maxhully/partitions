@@ -3,8 +3,8 @@ import pandas
 import pytest
 from scipy.sparse import csr_matrix, dok_matrix
 
-from graphs import Graph
-from graphs.graph import Edges, EmbeddedGraph, Neighbors, subgraph_matrix
+from partitions import Graph
+from partitions.graph import Edges, EmbeddedGraph, Neighbors, subgraph_matrix
 
 
 class TestGraph:

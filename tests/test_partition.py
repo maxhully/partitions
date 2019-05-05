@@ -1,8 +1,8 @@
 import numpy
 import pandas
 
-from graphs.graph import Graph
-from graphs.partition import Partition
+from partitions.graph import Graph
+from partitions.partition import Partition
 
 
 def check_embedding_of_parts(partition, expected_nodes):

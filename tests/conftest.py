@@ -4,7 +4,7 @@ import pandas
 import pytest
 from scipy.sparse import dok_matrix
 
-from graphs import Graph, Partition
+from partitions import Graph, Partition
 
 
 @pytest.fixture

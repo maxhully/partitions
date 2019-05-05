@@ -1,4 +1,4 @@
-# graphs
+# `partitions`
 
 ## Project goals
 
@@ -14,7 +14,7 @@
 
 ```python
 >>> import pandas
->>> from graphs import Graph
+>>> from partitions import Graph
 >>> graph = Graph.from_edges(
 ...     [(0, 1), (1, 2), (0, 2)],
 ...     data=pandas.DataFrame(
@@ -109,7 +109,7 @@ array([1, 2])
 ## Partitioning a graph
 
 ```python
->>> from graphs import Partition
+>>> from partitions import Partition
 >>> partition = Partition.from_assignment(graph, {0: "a", 1: "b", 2: "b"})
 >>> partition
 <Partition [2]>

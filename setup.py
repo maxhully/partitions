@@ -8,14 +8,14 @@ with open("./README.md") as f:
 requirements = []
 
 setup(
-    name="graphs",
+    name="partitions",
     version=version,
-    description="Data-rich graphs.",
+    description="Data-rich graphs and graph partitions.",
     author="Max Hully",
     author_email="max@mggg.org",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/mggg/graphs",
+    url="https://github.com/mggg/partitions",
     packages=find_packages(exclude=("tests",)),
     install_requires=requirements,
     classifiers=[
