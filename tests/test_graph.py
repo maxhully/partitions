@@ -171,7 +171,7 @@ class TestEmbeddedGraph:
         subgraph = graph.subgraph([0, 1])
         expected = edges_with_data["length"][0, 3] + edges_with_data["length"][1, 2]
         assert set(subgraph.cut_edges) == {(0, 3), (1, 2)}
-        assert subgraph.boundary.edge_data["length"] == expected
+        assert subgraph.boundary.data["length"] == expected
 
     def test_subgraph_of_subgraph_is_a_subgraph_of_the_original_graph(self, k4):
         subgraph = k4.subgraph([1, 2, 3])

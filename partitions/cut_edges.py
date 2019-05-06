@@ -16,7 +16,7 @@ class Boundary:
         self.neighbors = neighbors
         self.cut_edges = sorted_multiindex(nodes, neighbors)
         if graph.edges.data is not None:
-            self.edge_data = graph.edges.data.loc[self.cut_edges].sum()
+            self.data = graph.edges.data.loc[self.cut_edges].sum()
 
     def unique_nodes(self):
         return numpy.unique(self.nodes)

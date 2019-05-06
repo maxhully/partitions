@@ -66,3 +66,16 @@ def partition(nonregular):
     part1 = nonregular.subgraph([0, 1, 2])
     part2 = nonregular.subgraph([3, 4, 5])
     return Partition({0: part1, 1: part2})
+
+
+@pytest.fixture
+def grid10x10():
+    edges = [(i + 10 * j, i + 10 * j + 1) for i in range(9) for j in range(10)]
+    edges += [(10 * j, 10 * j + 10) for j in range(9)]
+    return Graph.from_edges(edges)
+
+
+@pytest.fixture
+def partition10x10(grid10x10):
+    assignment = {node: node % 10 for node in grid10x10}
+    return Partition.from_assignment(grid10x10, assignment)

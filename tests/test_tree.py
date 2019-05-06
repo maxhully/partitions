@@ -1,16 +1,18 @@
-from partitions.tree import (
-    random_spanning_tree,
-    contract_leaves_until_balanced_or_None,
-    bipartition_tree,
-    recursive_partition,
-    random_cut_edge,
-    ReCom,
-    map_with_boolean_array,
-)
-from partitions import Graph, Partition
-from scipy.sparse.csgraph import connected_components
 import numpy
 import pandas
+import pytest
+from scipy.sparse.csgraph import connected_components
+
+from partitions import Graph, Partition
+from partitions.tree import (
+    ReCom,
+    bipartition_tree,
+    contract_leaves_until_balanced_or_None,
+    map_with_boolean_array,
+    random_cut_edge,
+    random_spanning_tree,
+    recursive_partition,
+)
 
 
 class TestRandomSpanningTree:
@@ -39,10 +41,8 @@ class TestRandomSpanningTree:
 
 
 class TestContractEdgesUntilBalanced:
-    def test_on_10x10(self):
-        edges = [(i + 10 * j, i + 10 * j + 1) for i in range(9) for j in range(10)]
-        edges += [(10 * j, 10 * j + 10) for j in range(9)]
-        graph = Graph.from_edges(edges)
+    def test_on_10x10(self, grid10x10):
+        graph = grid10x10
         population = numpy.ones_like(graph.nodes)
         bounds = (10, 90)
 
@@ -88,10 +88,8 @@ class TestContractEdgesUntilBalanced:
 
 
 class TestBipartitionTree:
-    def test_on_10x10(self):
-        edges = [(i + 10 * j, i + 10 * j + 1) for i in range(9) for j in range(10)]
-        edges += [(i + 10 * j, i + 10 * j + 10) for i in range(10) for j in range(9)]
-        graph = Graph.from_edges(edges)
+    def test_on_10x10(self, grid10x10):
+        graph = grid10x10
         population = numpy.ones_like(graph.nodes)
         bounds = (30, 70)
 
@@ -109,10 +107,8 @@ class TestBipartitionTree:
 
 
 class TestRecursivePartition:
-    def test_on_10x10(self):
-        edges = [(i + 10 * j, i + 10 * j + 1) for i in range(9) for j in range(10)]
-        edges += [(i + 10 * j, i + 10 * j + 10) for i in range(10) for j in range(9)]
-        graph = Graph.from_edges(edges)
+    def test_on_10x10(self, grid10x10):
+        graph = grid10x10
         population = numpy.ones_like(graph.nodes)
         ideal_pop = population.sum() / 5
         bounds = (ideal_pop * 0.8, ideal_pop * 1.2)
@@ -160,6 +156,30 @@ class TestReCom:
         nodes = list(node for part in new_partition for node in part.image)
         assert len(nodes) == 8
         assert set(nodes) == set(k8.nodes)
+
+    def test_validates_bounds(self):
+        with pytest.raises(TypeError):
+            ReCom("pop", (4,))
+        with pytest.raises(TypeError):
+            ReCom("pop", 4)
+        with pytest.raises(TypeError):
+            ReCom("pop", (4, 5, 6))
+        with pytest.raises(TypeError):
+            ReCom("pop", ("a", "b"))
+        with pytest.raises(TypeError):
+            ReCom("pop", (100, 1))
+
+    def test_validates_pop_col(self):
+        with pytest.raises(TypeError):
+            ReCom(4, (10, 100))
+        with pytest.raises(TypeError):
+            ReCom(None, (10, 100))
+
+    def test_validates_method(self):
+        with pytest.raises(TypeError):
+            ReCom("pop", (10, 100), 1000)
+        with pytest.raises(TypeError):
+            ReCom("pop", (10, 100), False)
 
 
 def test_map_with_boolean_array():

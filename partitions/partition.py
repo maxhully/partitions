@@ -20,7 +20,8 @@ class Partition:
         return len(self.parts)
 
     def __iter__(self):
-        return iter(self.parts.values())
+        for index in self.index:
+            yield self[index]
 
     def __getitem__(self, i):
         return self.parts[i]
@@ -61,17 +62,13 @@ class Partition:
         reindexed_parts = {
             new_keys.get(key, key): part for key, part in self.parts.items()
         }
-        reindexed_assignment = {
-            node: new_keys.get(key, key) for node, key in self.assignment.items()
-        }
         if in_place is True:
             self.parts = reindexed_parts
             self.data.set_index(self.data.index.map(new_keys), inplace=True)
         else:
+            # We'll just let the constructor re-initialize the assignment
             return self.__class__(
-                reindexed_parts,
-                self.data.set_index(self.data.index.map(new_keys)),
-                reindexed_assignment,
+                reindexed_parts, self.data.set_index(self.data.index.map(new_keys))
             )
 
     @classmethod

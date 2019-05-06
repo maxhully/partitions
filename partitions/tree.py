@@ -1,5 +1,6 @@
 from collections import deque
 from itertools import repeat, chain
+from numbers import Number
 
 import numpy
 from scipy.sparse import csr_matrix
@@ -95,6 +96,23 @@ def map_with_boolean_array(array, selector, values):
 
 class ReCom:
     def __init__(self, pop_column, bounds, method=bipartition_tree):
+        if len(bounds) != 2:
+            raise TypeError(
+                "population bounds must be a tuple 2 numbers (upper and lower bound)"
+            )
+        if not all(isinstance(bound, Number) for bound in bounds):
+            raise TypeError("lower and upper bounds must be Numbers")
+        if bounds[0] >= bounds[1]:
+            raise TypeError(
+                "lower bound (bounds[0]) must be less than upper bound (bounds[1])"
+            )
+        if not isinstance(pop_column, str):
+            raise TypeError(
+                "pop_column should be the string name of the population column"
+            )
+        if not callable(method):
+            raise TypeError("the partitioning method should be callable")
+
         self.pop_column = pop_column
         self.bounds = bounds
         self.method = method

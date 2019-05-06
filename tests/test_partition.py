@@ -94,8 +94,8 @@ class TestPartition:
 
         assert set(partition[0].cut_edges) == set(partition[1].cut_edges)
 
-        assert partition[0].boundary.edge_data["length"] == expected_boundary
-        assert partition[1].boundary.edge_data["length"] == expected_boundary
+        assert partition[0].boundary.data["length"] == expected_boundary
+        assert partition[1].boundary.data["length"] == expected_boundary
 
     def test_cut_edges(self, four_cycle):
         partition = Partition.from_assignment(four_cycle, {0: 1, 1: 1, 2: 0, 3: 0})
@@ -127,3 +127,8 @@ class TestPartition:
         partition.reindex({0: "a", 1: "b"}, in_place=True)
         assert partition.data["population"]["b"] == 250
         assert partition.data["population"]["a"] == 100
+
+    def test_iterates_in_index_order(self, partition10x10):
+        for i, part in enumerate(partition10x10):
+            expected = partition10x10.parts[partition10x10.index[i]]
+            assert part is expected
