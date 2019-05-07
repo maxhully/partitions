@@ -5,7 +5,7 @@ version = "0.0.1"
 with open("./README.md") as f:
     long_description = f.read()
 
-requirements = []
+requirements = ["numpy", "scipy", "pandas"]
 
 setup(
     name="partitions",
